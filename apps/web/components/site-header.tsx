@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { LogOut, Shield, UserRound } from "lucide-react";
+import { BrainCircuit, LayoutGrid, LogOut, Menu, Shield, Swords, UserRound } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,10 +13,22 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Sheet, SheetClose, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useAuth } from "@/lib/auth-context";
 
 /** TechZup wordmark: white "Tech", glowing electric-blue "Zup". */
-export function Logo({ size = "md", tld = true, className = "" }: { size?: "sm" | "md" | "lg"; tld?: boolean; className?: string }) {
+export function Logo({
+  size = "md",
+  tld = true,
+  compact = false,
+  className = "",
+}: {
+  size?: "sm" | "md" | "lg";
+  tld?: boolean;
+  /** hide ".space" on very small screens */
+  compact?: boolean;
+  className?: string;
+}) {
   const text = size === "lg" ? "text-4xl sm:text-5xl" : size === "sm" ? "text-lg" : "text-[22px]";
   return (
     <Link href="/" aria-label="TechZup home" className={`tz-wordmark inline-flex items-baseline gap-1 ${text} ${className}`}>
@@ -24,16 +36,61 @@ export function Logo({ size = "md", tld = true, className = "" }: { size?: "sm" 
         <span className="tz-tech">Tech</span>
         <span className="tz-zup">Zup</span>
       </span>
-      {tld && <span className="tz-tld">.space</span>}
+      {tld && <span className={compact ? "tz-tld hidden min-[400px]:inline" : "tz-tld"}>.space</span>}
     </Link>
   );
 }
 
 const NAV = [
-  { href: "/#desks", label: "Desks" },
-  { href: "/#llm-wars", label: "LLM Wars" },
-  { href: "/ai-psychosis-test", label: "AI-Psychosis Test", hard: true },
+  { href: "/#desks", label: "Desks", Icon: LayoutGrid },
+  { href: "/#llm-wars", label: "LLM Wars", Icon: Swords },
+  { href: "/ai-psychosis-test", label: "AI-Psychosis Test", hard: true, Icon: BrainCircuit },
 ];
+
+/** Phone & tablet navigation (below md). */
+function MobileNav({ signedIn }: { signedIn: boolean }) {
+  return (
+    <Sheet>
+      <SheetTrigger asChild>
+        <Button variant="ghost" size="icon" className="md:hidden" aria-label="Open menu">
+          <Menu className="size-5" />
+        </Button>
+      </SheetTrigger>
+      <SheetContent side="right" className="w-[min(85vw,320px)] border-l border-[#1e9bff]/30 bg-[#05080f]/95 backdrop-blur-xl">
+        <SheetHeader className="border-b border-[#1e9bff]/20 pb-4">
+          <SheetTitle className="sr-only">TechZup menu</SheetTitle>
+          <SheetDescription className="sr-only">Site navigation</SheetDescription>
+          <Logo />
+        </SheetHeader>
+        <nav className="flex flex-col gap-1 px-4">
+          {NAV.map(({ href, label, hard, Icon }) => (
+            <SheetClose asChild key={href}>
+              {hard ? (
+                <a href={href} className="flex items-center gap-3 rounded-md px-3 py-3 text-[15px] text-foreground/90 hover:bg-[#1e9bff]/10 hover:text-[#4cc3ff]">
+                  <Icon className="size-4 text-[#4cc3ff]" /> {label}
+                </a>
+              ) : (
+                <Link href={href} className="flex items-center gap-3 rounded-md px-3 py-3 text-[15px] text-foreground/90 hover:bg-[#1e9bff]/10 hover:text-[#4cc3ff]">
+                  <Icon className="size-4 text-[#4cc3ff]" /> {label}
+                </Link>
+              )}
+            </SheetClose>
+          ))}
+        </nav>
+        {!signedIn && (
+          <div className="mt-auto flex flex-col gap-2 border-t border-[#1e9bff]/20 p-4">
+            <SheetClose asChild>
+              <Button asChild size="lg"><Link href="/login?next=/register">Join TechZup free</Link></Button>
+            </SheetClose>
+            <SheetClose asChild>
+              <Button asChild size="lg" variant="outline"><Link href="/login">Sign in</Link></Button>
+            </SheetClose>
+          </div>
+        )}
+      </SheetContent>
+    </Sheet>
+  );
+}
 
 export function SiteHeader() {
   const { status, identity, profile, isAdmin, signOut } = useAuth();
@@ -44,8 +101,8 @@ export function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 border-b border-[#1e9bff]/20 bg-[#03050b]/75 backdrop-blur-xl">
       <div aria-hidden className="pointer-events-none absolute inset-x-0 -bottom-px h-px bg-gradient-to-r from-transparent via-[#1e9bff]/70 to-transparent" />
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
-        <Logo />
+      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-3 px-4 sm:px-6">
+        <Logo compact className="shrink-0" />
         <nav className="hidden items-center gap-1 md:flex">
           {NAV.map((n) =>
             n.hard ? (
@@ -59,7 +116,7 @@ export function SiteHeader() {
             )
           )}
         </nav>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2">
           {status === "loading" ? (
             <div className="size-9 animate-pulse rounded-full bg-muted" />
           ) : signedIn ? (
@@ -105,11 +162,12 @@ export function SiteHeader() {
               <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
                 <Link href="/login">Sign in</Link>
               </Button>
-              <Button asChild size="sm">
+              <Button asChild size="sm" className="hidden min-[380px]:inline-flex">
                 <Link href="/login?next=/register">Join free</Link>
               </Button>
             </>
           )}
+          <MobileNav signedIn={signedIn} />
         </div>
       </div>
     </header>

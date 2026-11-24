@@ -89,8 +89,8 @@ export default function AccountPage() {
                   <AvatarFallback className="text-xl">{profile.nickname.slice(0, 1).toUpperCase()}</AvatarFallback>
                 </Avatar>
                 <div className="min-w-0 flex-1">
-                  <h1 className="truncate font-[family-name:var(--font-display)] text-2xl font-bold">{profile.displayName}</h1>
-                  <p className="truncate text-sm text-muted-foreground">@{profile.nickname} · {profile.email ?? "no email"}</p>
+                  <h1 className="break-words font-[family-name:var(--font-display)] text-xl font-bold sm:truncate sm:text-2xl">{profile.displayName}</h1>
+                  <p className="break-all text-sm text-muted-foreground sm:truncate">@{profile.nickname} · {profile.email ?? "no email"}</p>
                   <div className="mt-2 flex flex-wrap gap-2">
                     <Badge variant="secondary" className="capitalize">{profile.role}</Badge>
                     <Badge variant="outline">Signed in with {profile.provider.replace(".com", "")}</Badge>

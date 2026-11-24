@@ -126,6 +126,35 @@ export default function AdminUsersPage() {
       </div>
     );
 
+  const actions = (u: UserProfile, self: boolean) => (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon" aria-label={`Actions for ${u.nickname}`}><MoreHorizontal className="size-4" /></Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-52">
+        <DropdownMenuLabel>Role</DropdownMenuLabel>
+        <DropdownMenuRadioGroup value={u.role} onValueChange={(v) => v !== u.role && update(u, { role: v as Role })}>
+          <DropdownMenuRadioItem value="reader" disabled={self}>Reader</DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value="editor" disabled={self}>Editor</DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value="admin">Admin</DropdownMenuRadioItem>
+        </DropdownMenuRadioGroup>
+        <DropdownMenuSeparator />
+        {u.status === "active" ? (
+          <DropdownMenuItem disabled={self} onSelect={() => update(u, { status: "suspended" })}>
+            <UserX /> Suspend
+          </DropdownMenuItem>
+        ) : (
+          <DropdownMenuItem onSelect={() => update(u, { status: "active" })}>
+            <UserCheck /> Reactivate
+          </DropdownMenuItem>
+        )}
+        <DropdownMenuItem variant="destructive" disabled={self} onSelect={() => setToDelete(u)}>
+          <Trash2 /> Delete
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+
   const pages = Math.max(1, Math.ceil(total / PAGE));
   const page = Math.floor(offset / PAGE) + 1;
 
@@ -199,7 +228,42 @@ export default function AdminUsersPage() {
               </Select>
             </div>
 
-            <div className="overflow-x-auto rounded-lg border border-border">
+            {/* phones: card list */}
+            <ul className="grid gap-2 md:hidden">
+              {loading && rows.length === 0 ? (
+                <li className="flex justify-center py-8"><Loader2 className="size-5 animate-spin text-muted-foreground" /></li>
+              ) : rows.length === 0 ? (
+                <li className="py-8 text-center text-sm text-muted-foreground">No members match these filters.</li>
+              ) : (
+                rows.map((u) => {
+                  const self = u.uid === profile?.uid;
+                  return (
+                    <li key={u.uid} className="rounded-lg border border-border bg-black/30 p-3">
+                      <div className="flex items-start gap-3">
+                        <Avatar className="size-9">
+                          <AvatarImage src={u.photoURL ?? undefined} alt="" />
+                          <AvatarFallback>{u.nickname.slice(0, 1).toUpperCase()}</AvatarFallback>
+                        </Avatar>
+                        <div className="min-w-0 flex-1">
+                          <div className="truncate font-medium">{u.displayName} {self && <span className="text-xs text-[#4cc3ff]">(you)</span>}</div>
+                          <div className="truncate text-xs text-muted-foreground">@{u.nickname}</div>
+                          <div className="truncate text-xs text-muted-foreground">{u.email ?? "—"}</div>
+                        </div>
+                        {actions(u, self)}
+                      </div>
+                      <div className="mt-3 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
+                        <Badge variant={u.role === "admin" ? "default" : "secondary"} className="capitalize">{u.role}</Badge>
+                        <Badge variant={u.status === "active" ? "outline" : "destructive"} className="capitalize">{u.status}</Badge>
+                        <span>· {providerName(u.provider)} · joined {fmt(u.createdAt)}</span>
+                      </div>
+                    </li>
+                  );
+                })
+              )}
+            </ul>
+
+            {/* tablet & desktop: table */}
+            <div className="hidden overflow-x-auto rounded-lg border border-border md:block">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -228,7 +292,7 @@ export default function AdminUsersPage() {
                                 <AvatarImage src={u.photoURL ?? undefined} alt="" />
                                 <AvatarFallback>{u.nickname.slice(0, 1).toUpperCase()}</AvatarFallback>
                               </Avatar>
-                              <div className="min-w-0">
+                              <div className="min-w-0 max-w-[220px] lg:max-w-[280px]">
                                 <div className="truncate font-medium">{u.displayName} {self && <span className="text-xs text-[#4cc3ff]">(you)</span>}</div>
                                 <div className="truncate text-xs text-muted-foreground">@{u.nickname} · {u.email ?? "—"}</div>
                               </div>
@@ -242,32 +306,7 @@ export default function AdminUsersPage() {
                           <TableCell className="hidden lg:table-cell text-muted-foreground">{fmt(u.createdAt)}</TableCell>
                           <TableCell className="hidden lg:table-cell text-muted-foreground">{fmt(u.lastLoginAt)}</TableCell>
                           <TableCell>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" aria-label={`Actions for ${u.nickname}`}><MoreHorizontal className="size-4" /></Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end" className="w-52">
-                                <DropdownMenuLabel>Role</DropdownMenuLabel>
-                                <DropdownMenuRadioGroup value={u.role} onValueChange={(v) => v !== u.role && update(u, { role: v as Role })}>
-                                  <DropdownMenuRadioItem value="reader" disabled={self}>Reader</DropdownMenuRadioItem>
-                                  <DropdownMenuRadioItem value="editor" disabled={self}>Editor</DropdownMenuRadioItem>
-                                  <DropdownMenuRadioItem value="admin">Admin</DropdownMenuRadioItem>
-                                </DropdownMenuRadioGroup>
-                                <DropdownMenuSeparator />
-                                {u.status === "active" ? (
-                                  <DropdownMenuItem disabled={self} onSelect={() => update(u, { status: "suspended" })}>
-                                    <UserX /> Suspend
-                                  </DropdownMenuItem>
-                                ) : (
-                                  <DropdownMenuItem onSelect={() => update(u, { status: "active" })}>
-                                    <UserCheck /> Reactivate
-                                  </DropdownMenuItem>
-                                )}
-                                <DropdownMenuItem variant="destructive" disabled={self} onSelect={() => setToDelete(u)}>
-                                  <Trash2 /> Delete
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
+                            {actions(u, self)}
                           </TableCell>
                         </TableRow>
                       );
@@ -277,7 +316,7 @@ export default function AdminUsersPage() {
               </Table>
             </div>
 
-            <div className="flex items-center justify-between text-sm text-muted-foreground">
+            <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-muted-foreground">
               <span>{total} member{total === 1 ? "" : "s"} · page {page} of {pages}</span>
               <div className="flex gap-2">
                 <Button variant="outline" size="sm" disabled={offset === 0} onClick={() => setOffset(Math.max(0, offset - PAGE))}>

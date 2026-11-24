@@ -39,7 +39,7 @@ export function TestHistory() {
 
   return (
     <Card className="tz-panel">
-      <CardHeader className="flex flex-row items-start justify-between gap-4">
+      <CardHeader className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:gap-4">
         <div>
           <CardTitle>AI-Psychosis Test history</CardTitle>
           <CardDescription>Your saved results, newest first.</CardDescription>
@@ -63,7 +63,7 @@ export function TestHistory() {
                 >
                   {r.grade}
                 </span>
-                <span className="min-w-36 font-medium">{VERDICT[r.verdict]}</span>
+                <span className="font-medium sm:min-w-36">{VERDICT[r.verdict]}</span>
                 <span className="text-muted-foreground">AI {r.ai}% · Anti {r.anti}% · clarity {r.clarity}</span>
                 {r.timedOut && <Badge variant="outline">timed out</Badge>}
                 <span className="ms-auto text-xs text-muted-foreground">
