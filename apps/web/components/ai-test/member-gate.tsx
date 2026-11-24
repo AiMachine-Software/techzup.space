@@ -66,12 +66,15 @@ export function SaveResultToAccount({
   answers,
   finishedAt,
   timedOut,
+  ownerUid,
 }: {
   answers: Record<number, number>;
   finishedAt: number;
   timedOut: boolean;
+  /** uid of the member who took the test; nothing is saved unless it matches the signed-in member */
+  ownerUid?: string;
 }) {
-  const { status, api } = useAuth();
+  const { status, api, profile } = useAuth();
   const { lang } = useI18n();
   const g = useGateText();
   const [state, setState] = useState<"idle" | "saving" | "saved" | "failed">("idle");
@@ -79,6 +82,7 @@ export function SaveResultToAccount({
 
   useEffect(() => {
     if (status !== "ready" || sent.current === finishedAt) return;
+    if (!ownerUid || ownerUid !== profile?.uid) return;
     sent.current = finishedAt;
     const s = computeScores(answers);
     const { grade, clarity } = gradeOf(s.ai.pct, s.anti.pct, s.verdictKey);
@@ -96,7 +100,7 @@ export function SaveResultToAccount({
         finishedAt,
       }),
     }).then((r) => setState(r.ok ? "saved" : "failed"));
-  }, [status, api, answers, finishedAt, timedOut, lang]);
+  }, [status, api, answers, finishedAt, timedOut, lang, ownerUid, profile?.uid]);
 
   if (state === "idle") return null;
   return (

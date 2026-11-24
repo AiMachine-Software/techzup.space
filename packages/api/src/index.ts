@@ -45,6 +45,21 @@ async function syncAuthUser(uid: string, role: Role, statusV: UserStatus) {
   await auth.updateUser(uid, { disabled: statusV === "suspended" });
 }
 
+/**
+ * Profiles whose Firebase login no longer exists (e.g. the user was deleted in the Firebase
+ * console, which doesn't touch Firestore). Returns the set of orphaned uids among `uids`.
+ */
+async function orphanedUids(uids: string[]): Promise<Set<string> | null> {
+  const auth = privilegedAuth();
+  if (!auth || !uids.length) return auth ? new Set() : null;
+  const missing = new Set<string>();
+  for (let i = 0; i < uids.length; i += 100) {
+    const r = await auth.getUsers(uids.slice(i, i + 100).map((uid) => ({ uid })));
+    for (const id of r.notFound) if ("uid" in id) missing.add(id.uid);
+  }
+  return missing;
+}
+
 export const app = new Elysia({ prefix: "/api" })
   .onError("global", ({ error }) => {
     if (error instanceof StorageUnavailable)
@@ -170,8 +185,10 @@ export const app = new Elysia({ prefix: "/api" })
           const count = <K extends keyof UserProfile>(k: K) =>
             all.reduce<Record<string, number>>((m, u) => ((m[String(u[k])] = (m[String(u[k])] ?? 0) + 1), m), {});
           const weekAgo = Date.now() - 7 * 864e5;
+          const orphans = await orphanedUids(all.map((u) => u.uid));
           return {
             total: all.length,
+            orphans: orphans?.size ?? 0,
             newThisWeek: all.filter((u) => u.createdAt >= weekAgo).length,
             newsletter: all.filter((u) => u.newsletter).length,
             byRole: count("role"),
@@ -190,14 +207,30 @@ export const app = new Elysia({ prefix: "/api" })
               offset: t.Optional(t.Numeric({ minimum: 0 })),
             }),
           },
-          async ({ query }) =>
-            users().list({
+          async ({ query }) => {
+            const page = await users().list({
               q: query.q,
               role: query.role,
               status: query.status,
               limit: query.limit ?? 20,
               offset: query.offset ?? 0,
-            })
+            });
+            const orphans = await orphanedUids(page.users.map((u) => u.uid));
+            return { ...page, users: page.users.map((u) => ({ ...u, authMissing: orphans?.has(u.uid) ?? false })) };
+          }
+        )
+        .post(
+          "/admin/cleanup-orphans",
+          // Optional "uids" limits the cleanup to those profiles (used by tests); otherwise all orphans.
+          { body: t.Optional(t.Object({ uids: t.Optional(t.Array(t.String({ maxLength: 128 }), { maxItems: 500 })) })) },
+          async ({ body }) => {
+          const scoped = (body as { uids?: string[] } | undefined)?.uids;
+          const candidates = scoped?.length ? scoped : (await users().all()).map((u) => u.uid);
+          const orphans = await orphanedUids(candidates);
+          if (!orphans) return status(503, { error: "storage_not_configured" });
+          for (const uid of orphans) await users().remove(uid);
+          return { removed: orphans.size };
+          }
         )
         .patch(
           "/admin/users/:uid",

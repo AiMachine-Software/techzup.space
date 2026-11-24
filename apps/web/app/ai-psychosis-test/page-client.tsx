@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { BrainCircuit, HeartPulse } from "lucide-react";
 import { Hero } from "@/components/ai-test/hero";
 import { Phenomena } from "@/components/ai-test/phenomena";
@@ -8,6 +8,7 @@ import { QuizFlow } from "@/components/ai-test/quiz-flow";
 import { Results } from "@/components/ai-test/results";
 import { MemberGate, SaveResultToAccount } from "@/components/ai-test/member-gate";
 import { useAuth } from "@/lib/auth-context";
+import { claimSession, clearForOtherMember } from "@/lib/ai-test/test-session";
 import { Guidance } from "@/components/ai-test/guidance";
 import { References } from "@/components/ai-test/references";
 import { LanguageSwitcher } from "@/components/ai-test/language-switcher";
@@ -52,6 +53,15 @@ export function AiTestPage() {
   // techzup.space membership is required to take the test
   const { status: memberStatus, profile: member } = useAuth();
   const isMember = memberStatus === "ready";
+
+  // Tests belong to the member who took them: claim a new test, and never show or save
+  // a previous person's test (shared browsers) to whoever is signed in now.
+  useEffect(() => {
+    if (!isMember || !member || !session) return;
+    if (session.ownerUid && session.ownerUid !== member.uid) clearForOtherMember();
+    else if (!session.ownerUid && session.finishedAt) clearForOtherMember();
+    else if (!session.ownerUid) claimSession(member.uid);
+  }, [isMember, member, session]);
   const finished = isMember && !!(profile && session?.finishedAt);
   const inProgress = isMember && !!(profile && session && !session.finishedAt);
 
@@ -217,7 +227,12 @@ export function AiTestPage() {
           />
         )}
         {finished && session?.finishedAt && (
-          <SaveResultToAccount answers={answers} finishedAt={session.finishedAt} timedOut={!!session.timedOut} />
+          <SaveResultToAccount
+            answers={answers}
+            finishedAt={session.finishedAt}
+            timedOut={!!session.timedOut}
+            ownerUid={session.ownerUid}
+          />
         )}
         <Guidance verdictKey={verdictKey} />
         <References />

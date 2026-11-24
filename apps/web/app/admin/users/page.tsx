@@ -43,7 +43,20 @@ interface Stats {
   byRole: Record<string, number>;
   byStatus: Record<string, number>;
   byProvider: Record<string, number>;
+  orphans?: number;
 }
+
+type Row = UserProfile & { authMissing?: boolean };
+
+/** Admin-only maintenance text (internal tool; English). */
+const ORPHAN = {
+  badge: "No login",
+  badgeTitle: "This profile's Firebase account was deleted (e.g. in the Firebase console). It can't sign in.",
+  note: (n: number) => `${n} profile${n === 1 ? "" : "s"} have no Firebase login (deleted in the Firebase console). Their data still counts in stats.`,
+  cleanup: "Remove orphaned profiles",
+  done: (n: number) => `Removed ${n} orphaned profile${n === 1 ? "" : "s"}`,
+  failed: "Cleanup failed.",
+};
 
 const PAGE = 20;
 const providerName = (p: string) => ({ "google.com": "Google", "facebook.com": "Facebook", "twitter.com": "X" })[p] ?? p;
@@ -57,7 +70,7 @@ export default function AdminUsersPage() {
   const fmt = (ms: number) => date(ms, { year: "2-digit", month: "short", day: "numeric" });
   const router = useRouter();
   const [stats, setStats] = useState<Stats | null>(null);
-  const [rows, setRows] = useState<UserProfile[]>([]);
+  const [rows, setRows] = useState<Row[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
@@ -89,7 +102,7 @@ export default function AdminUsersPage() {
     if (role !== "all") p.set("role", role);
     if (state !== "all") p.set("status", state);
     const [list, st] = await Promise.all([
-      api<{ users: UserProfile[]; total: number }>(`/admin/users?${p}`),
+      api<{ users: Row[]; total: number }>(`/admin/users?${p}`),
       api<Stats>("/admin/stats"),
     ]);
     if (list.ok) {
@@ -131,7 +144,7 @@ export default function AdminUsersPage() {
       </div>
     );
 
-  const actions = (u: UserProfile, self: boolean) => (
+  const actions = (u: Row, self: boolean) => (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon" aria-label={`${A.actions}: ${u.nickname}`}><MoreHorizontal className="size-4" /></Button>
@@ -195,6 +208,23 @@ export default function AdminUsersPage() {
             </Card>
           ))}
         </div>
+        {!!stats?.orphans && (
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-sm">
+            <span>{ORPHAN.note(stats.orphans)}</span>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={async () => {
+                const r = await api<{ removed: number }>("/admin/cleanup-orphans", { method: "POST" });
+                if (r.ok) toast.success(ORPHAN.done(r.data.removed));
+                else toast.error(ORPHAN.failed);
+                void load();
+              }}
+            >
+              <Trash2 className="size-4" /> {ORPHAN.cleanup}
+            </Button>
+          </div>
+        )}
         {stats && (
           <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
             {Object.entries(stats.byProvider).map(([p, n]) => (
@@ -250,7 +280,12 @@ export default function AdminUsersPage() {
                           <AvatarFallback>{u.nickname.slice(0, 1).toUpperCase()}</AvatarFallback>
                         </Avatar>
                         <div className="min-w-0 flex-1">
-                          <div className="truncate font-medium">{u.displayName} {self && <span className="text-xs text-[#4cc3ff]">{A.you}</span>}</div>
+                          <div className="truncate font-medium">{u.displayName} {self && <span className="text-xs text-[#4cc3ff]">{A.you}</span>}
+                            {u.authMissing && (
+                              <Badge variant="outline" className="ms-1 border-amber-500/60 text-amber-500" title={ORPHAN.badgeTitle}>
+                                {ORPHAN.badge}
+                              </Badge>
+                            )}</div>
                           <div className="truncate text-xs text-muted-foreground">@{u.nickname}</div>
                           <div className="truncate text-xs text-muted-foreground">{u.email ?? "—"}</div>
                         </div>
@@ -298,7 +333,12 @@ export default function AdminUsersPage() {
                                 <AvatarFallback>{u.nickname.slice(0, 1).toUpperCase()}</AvatarFallback>
                               </Avatar>
                               <div className="min-w-0 max-w-[220px] lg:max-w-[280px]">
-                                <div className="truncate font-medium">{u.displayName} {self && <span className="text-xs text-[#4cc3ff]">{A.you}</span>}</div>
+                                <div className="truncate font-medium">{u.displayName} {self && <span className="text-xs text-[#4cc3ff]">{A.you}</span>}
+                            {u.authMissing && (
+                              <Badge variant="outline" className="ms-1 border-amber-500/60 text-amber-500" title={ORPHAN.badgeTitle}>
+                                {ORPHAN.badge}
+                              </Badge>
+                            )}</div>
                                 <div className="truncate text-xs text-muted-foreground">@{u.nickname} · {u.email ?? "—"}</div>
                               </div>
                             </div>

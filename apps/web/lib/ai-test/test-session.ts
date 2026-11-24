@@ -29,6 +29,8 @@ export interface Session {
   startedAt: number;
   finishedAt?: number;
   timedOut?: boolean;
+  /** TechZup member (uid) who took this test — results are only ever saved to this account. */
+  ownerUid?: string;
 }
 
 const KEYS = {
@@ -146,6 +148,25 @@ export function finishTest(timedOut: boolean) {
 export function resetSession() {
   write(KEYS.session, null);
   write(KEYS.answers, null);
+  emit();
+}
+
+/** Tag an unowned, in-progress test with the signed-in member. */
+export function claimSession(uid: string) {
+  const s = parse<Session | null>(read(KEYS.session), null);
+  if (!s || s.ownerUid || s.finishedAt) return;
+  write(KEYS.session, { ...s, ownerUid: uid });
+  emit();
+}
+
+/**
+ * A different member is signed in on this browser: drop the previous person's test, answers
+ * and pre-test profile so nothing of theirs is shown or saved to the new account.
+ */
+export function clearForOtherMember() {
+  write(KEYS.session, null);
+  write(KEYS.answers, null);
+  write(KEYS.profile, null);
   emit();
 }
 

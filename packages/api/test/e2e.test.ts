@@ -363,6 +363,32 @@ describe("live deployment", () => {
   });
 });
 
+describe("orphaned profiles (login deleted outside the app)", () => {
+  test("a profile whose Firebase user was deleted is flagged, counted and removed by cleanup", async () => {
+    const ghost = await signIn("ghost");
+    expect((await call("POST", "/users/register", ghost.idToken, profile(`${RUN}-gh`, "Ghost"))).status).toBe(200);
+    await call("POST", "/results", ghost.idToken, result(Date.now() - 2000));
+    // what deleting the user in the Firebase console does: Auth gone, Firestore untouched
+    await adminAuth()!.deleteUser(ghost.uid);
+
+    const list = await call<{ users: { uid: string; authMissing: boolean }[] }>("GET", `/admin/users?q=${RUN}-gh`, admin.idToken);
+    expect(list.data.users).toEqual([expect.objectContaining({ uid: ghost.uid, authMissing: true })]);
+    const st = await call<{ orphans: number }>("GET", "/admin/stats", admin.idToken);
+    expect(st.data.orphans).toBeGreaterThanOrEqual(1);
+
+    // Scoped to this test's own profile: real orphans in the project are never touched by tests.
+    const scope = { uids: [ghost.uid, admin.uid] };
+    expect((await call("POST", "/admin/cleanup-orphans", third.idToken, scope)).status).toBe(403);
+    const clean = await call<{ removed: number }>("POST", "/admin/cleanup-orphans", admin.idToken, scope);
+    expect(clean.status).toBe(200);
+    expect(clean.data.removed).toBe(1);
+    expect((await users().doc(ghost.uid).get()).exists).toBe(false);
+    expect((await users().doc(ghost.uid).collection("testResults").get()).size).toBe(0);
+    // live members are untouched
+    expect((await users().doc(admin.uid).get()).exists).toBe(true);
+  });
+});
+
 describe("email / password accounts (Firebase Auth password provider)", () => {
   const pwEmail = `pw.${RUN}@e2e.techzup.test`;
   const pwPassword = randomPassword();
