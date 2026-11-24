@@ -5,7 +5,7 @@ import { getFirestore, type Firestore } from "firebase-admin/firestore";
 /**
  * Firebase Admin, initialised lazily from env.
  *
- *   FIREBASE_SERVICE_ACCOUNT  full service-account JSON (raw or base64)  → Auth + Firestore
+ *   FIREBASE_SERVICE_ACCOUNT (or FIREBASE_SERVICE_ACCOUNT_KEY)  full service-account JSON (raw or base64)  → Auth + Firestore
  *   — or — FIREBASE_PROJECT_ID + FIREBASE_CLIENT_EMAIL + FIREBASE_PRIVATE_KEY
  *   — or — FIREBASE_PROJECT_ID (or NEXT_PUBLIC_FIREBASE_PROJECT_ID) alone
  *            → ID-token verification only (Google's public keys); no Firestore, no user admin.
@@ -14,7 +14,8 @@ let app: App | null | undefined;
 let hasCredential = false;
 
 function readServiceAccount() {
-  const raw = process.env.FIREBASE_SERVICE_ACCOUNT?.trim();
+  // FIREBASE_SERVICE_ACCOUNT_KEY is accepted as an alias (name used on the Vercel project).
+  const raw = (process.env.FIREBASE_SERVICE_ACCOUNT || process.env.FIREBASE_SERVICE_ACCOUNT_KEY)?.trim();
   if (raw) {
     const json = raw.startsWith("{") ? raw : Buffer.from(raw, "base64").toString("utf8");
     const sa = JSON.parse(json);
