@@ -111,10 +111,15 @@ export function useSiteI18n() {
 
   const date = useCallback(
     (ms: number, opts: Intl.DateTimeFormatOptions = { year: "numeric", month: "short", day: "numeric" }) => {
+      // Intl.DateTimeFormat accepts date-only and date+time options (toLocaleDateString rejects timeStyle).
       try {
-        return new Date(ms).toLocaleDateString(lang.locale, opts);
+        return new Intl.DateTimeFormat(lang.locale, opts).format(ms);
       } catch {
-        return new Date(ms).toLocaleDateString(undefined, opts);
+        try {
+          return new Intl.DateTimeFormat(undefined, opts).format(ms);
+        } catch {
+          return new Date(ms).toISOString().slice(0, 10);
+        }
       }
     },
     [lang.locale]
