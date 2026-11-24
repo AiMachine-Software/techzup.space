@@ -4,36 +4,43 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { SignInButtons } from "@/components/sign-in-buttons";
+import { AgreeNote, SignInButtons } from "@/components/sign-in-buttons";
 import { useAuth } from "@/lib/auth-context";
+import { fill, useSiteI18n } from "@/lib/i18n";
 
 export function HomeAuthCard() {
   const { status, profile } = useAuth();
+  const { t } = useSiteI18n();
+  const c = t.home.card;
 
-  if (status === "ready" && profile)
+  if (status === "ready" && profile) {
+    const topics = profile.interests
+      .map((i) => t.interests[i as keyof typeof t.interests]?.short ?? i)
+      .join(", ");
     return (
       <Card className="tz-panel tz-panel-glow">
         <CardHeader>
-          <CardTitle>Welcome back, {profile.nickname}</CardTitle>
-          <CardDescription>Your topics: {profile.interests.length ? profile.interests.join(", ").toUpperCase() : "none yet"}</CardDescription>
+          <CardTitle>{fill(c.welcome, { name: profile.nickname })}</CardTitle>
+          <CardDescription>{fill(c.yourTopics, { topics: topics || c.noTopics })}</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-2">
           <Button asChild>
-            <Link href="/account">My account <ArrowRight className="size-4" /></Link>
+            <Link href="/account">{t.nav.myAccount} <ArrowRight className="size-4 rtl:rotate-180" /></Link>
           </Button>
           <Button asChild variant="outline">
-            <a href="/ai-psychosis-test">Take the AI-Psychosis Test</a>
+            <a href="/ai-psychosis-test">{c.takeTest}</a>
           </Button>
         </CardContent>
       </Card>
     );
+  }
 
   if (status === "error")
     return (
       <Card className="tz-panel tz-panel-glow">
         <CardHeader>
-          <CardTitle>Accounts are temporarily unavailable</CardTitle>
-          <CardDescription>You&apos;re signed in, but we couldn&apos;t load your profile. Please try again shortly.</CardDescription>
+          <CardTitle>{c.unavailableTitle}</CardTitle>
+          <CardDescription>{c.unavailableDesc}</CardDescription>
         </CardHeader>
       </Card>
     );
@@ -42,12 +49,12 @@ export function HomeAuthCard() {
     return (
       <Card className="tz-panel tz-panel-glow">
         <CardHeader>
-          <CardTitle>One more step</CardTitle>
-          <CardDescription>You&apos;re signed in. Finish your profile to activate your account.</CardDescription>
+          <CardTitle>{c.oneMoreTitle}</CardTitle>
+          <CardDescription>{c.oneMoreDesc}</CardDescription>
         </CardHeader>
         <CardContent>
           <Button asChild className="w-full">
-            <Link href="/register">Finish registration <ArrowRight className="size-4" /></Link>
+            <Link href="/register">{t.nav.finishRegistration} <ArrowRight className="size-4 rtl:rotate-180" /></Link>
           </Button>
         </CardContent>
       </Card>
@@ -56,14 +63,12 @@ export function HomeAuthCard() {
   return (
     <Card className="tz-panel tz-panel-glow">
       <CardHeader>
-        <CardTitle className="font-[family-name:var(--font-display)] text-xl">Sign in to TechZup</CardTitle>
-        <CardDescription>New here? Signing in creates your account.</CardDescription>
+        <CardTitle className="tz-display text-xl">{c.signInTitle}</CardTitle>
+        <CardDescription>{c.signInDesc}</CardDescription>
       </CardHeader>
       <CardContent>
         <SignInButtons />
-        <p className="mt-4 text-center text-xs text-muted-foreground">
-          By continuing you agree to our <Link href="/terms" className="underline underline-offset-2">terms &amp; privacy notice</Link>.
-        </p>
+        <AgreeNote className="mt-4" />
       </CardContent>
     </Card>
   );

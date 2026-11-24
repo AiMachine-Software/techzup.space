@@ -1,0 +1,2 @@
+/** Runs before first paint on platform pages to avoid a theme/language flash. */
+export const PLATFORM_BOOT_SCRIPT = `(function(){try{var d=document.documentElement;var t=localStorage.getItem("ai-psy-theme");if(t!=="dark"&&t!=="light")t="cyberpunk";d.dataset.theme=t;if(t==="light"){d.classList.remove("dark");d.style.colorScheme="light"}else{d.classList.add("dark");d.style.colorScheme="dark"}var l=localStorage.getItem("ai-psy-lang");if(l&&/^[a-z]{2}$/.test(l)){d.lang=l;d.dir=l==="ar"?"rtl":"ltr"}}catch(e){}})();`;

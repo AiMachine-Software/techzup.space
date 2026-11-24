@@ -3,48 +3,16 @@
 import { useEffect, useRef, useState } from "react";
 import { CheckCircle2, Loader2, Lock, UserPlus } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
+import { useSiteI18n } from "@/lib/i18n";
 import { useI18n } from "@/lib/ai-test/i18n";
 import { gradeOf } from "@/lib/ai-test/grade";
 import { computeScores } from "@/lib/ai-test/quiz";
 
 const NEXT = "/ai-psychosis-test";
 
-const TEXT = {
-  en: {
-    label: "[ MEMBERS ONLY ]",
-    title: "Register with techzup.space to take the test",
-    body: "The AI-Psychosis Test is free for techzup.space members. Sign in with Google, Facebook or X, then finish a one-minute profile.",
-    join: "Sign in / Join free",
-    finishTitle: "One more step",
-    finishBody: "You're signed in. Finish your techzup.space profile to unlock the test.",
-    finish: "Finish registration",
-    suspended: "This techzup.space account is suspended, so the test isn't available.",
-    error: "We couldn't check your membership right now. Please refresh in a moment.",
-    checking: "Checking your membership…",
-    saved: "Saved to your techzup.space account",
-    saving: "Saving to your account…",
-    saveFailed: "Couldn't save this result to your account.",
-  },
-  th: {
-    label: "[ สำหรับสมาชิก ]",
-    title: "ลงทะเบียน techzup.space ก่อนทำแบบทดสอบ",
-    body: "แบบทดสอบ AI-Psychosis ใช้ได้ฟรีสำหรับสมาชิก techzup.space เข้าสู่ระบบด้วย Google, Facebook หรือ X แล้วกรอกโปรไฟล์สั้น ๆ",
-    join: "เข้าสู่ระบบ / สมัครฟรี",
-    finishTitle: "อีกขั้นเดียว",
-    finishBody: "คุณเข้าสู่ระบบแล้ว กรอกโปรไฟล์ techzup.space ให้เสร็จเพื่อเริ่มทำแบบทดสอบ",
-    finish: "ลงทะเบียนให้เสร็จ",
-    suspended: "บัญชี techzup.space นี้ถูกระงับ จึงทำแบบทดสอบไม่ได้",
-    error: "ตรวจสอบสถานะสมาชิกไม่ได้ในขณะนี้ กรุณารีเฟรชอีกครั้ง",
-    checking: "กำลังตรวจสอบสถานะสมาชิก…",
-    saved: "บันทึกผลลงบัญชี techzup.space แล้ว",
-    saving: "กำลังบันทึกลงบัญชี…",
-    saveFailed: "บันทึกผลลงบัญชีไม่สำเร็จ",
-  },
-};
-
+/** Gate text follows the site language (22 languages). */
 export function useGateText() {
-  const { lang } = useI18n();
-  return lang === "th" ? TEXT.th : TEXT.en;
+  return useSiteI18n().t.gate;
 }
 
 /** True once the visitor is a registered, active techzup.space member. */

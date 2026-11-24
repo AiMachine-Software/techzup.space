@@ -1,17 +1,18 @@
 "use client";
 
 import { Suspense, useEffect } from "react";
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Logo } from "@/components/site-header";
-import { SignInButtons } from "@/components/sign-in-buttons";
+import { AgreeNote, SignInButtons } from "@/components/sign-in-buttons";
+import { useSiteI18n } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth-context";
 import { goTo, safeNext } from "@/lib/next-path";
 
 
 function LoginInner() {
   const { status } = useAuth();
+  const { t } = useSiteI18n();
   const router = useRouter();
   const next = safeNext(useSearchParams().get("next"));
 
@@ -25,26 +26,23 @@ function LoginInner() {
     <Card className="tz-panel tz-panel-glow w-full max-w-md">
       <CardHeader className="flex flex-col items-center gap-2 text-center">
         <Logo size="lg" className="justify-center" />
-        <p className="tz-kicker mt-3 text-[#4cc3ff]">Member access</p>
-        <CardTitle className="tz-display text-2xl">Sign in or create an account</CardTitle>
-        <CardDescription className="max-w-xs">Use Google (Gmail), Facebook or X. New members finish a short profile next.</CardDescription>
+        <p className="tz-kicker mt-3 text-[#4cc3ff]">{t.login.kicker}</p>
+        <CardTitle className="tz-display text-2xl">{t.login.title}</CardTitle>
+        <CardDescription className="max-w-xs">{t.login.desc}</CardDescription>
       </CardHeader>
       <CardContent>
         {status === "suspended" ? (
           <p className="rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm">
-            This account is suspended. Contact the techzup.space team if you think this is a mistake.
+            {t.login.suspended}
           </p>
         ) : status === "error" ? (
           <p className="rounded-md border border-amber-400/50 bg-amber-400/10 p-3 text-sm">
-            You&apos;re signed in, but member accounts are temporarily unavailable. Please try again shortly.
+            {t.login.unavailable}
           </p>
         ) : (
           <SignInButtons />
         )}
-        <p className="mt-6 text-center text-xs text-muted-foreground">
-          By continuing you agree to our{" "}
-          <Link href="/terms" className="underline underline-offset-2">terms &amp; privacy notice</Link>.
-        </p>
+        <AgreeNote className="mt-6" />
       </CardContent>
     </Card>
   );

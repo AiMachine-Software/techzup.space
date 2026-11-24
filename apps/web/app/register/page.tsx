@@ -13,6 +13,7 @@ import { ProfileFields, validateProfile, type ProfileDraft, type ProfileErrors }
 import { SiteHeader } from "@/components/site-header";
 import { useAuth } from "@/lib/auth-context";
 import { goTo, safeNext } from "@/lib/next-path";
+import { fillNodes, useSiteI18n } from "@/lib/i18n";
 
 export default function RegisterPage() {
   return (
@@ -24,6 +25,7 @@ export default function RegisterPage() {
 
 function RegisterInner() {
   const { status, identity, api, refresh } = useAuth();
+  const { t } = useSiteI18n();
   const router = useRouter();
   const next = safeNext(useSearchParams().get("next"));
   const [draft, setDraft] = useState<ProfileDraft>({ nickname: "", displayName: "", country: "", interests: ["ai", "ml"], newsletter: true });
@@ -47,8 +49,8 @@ function RegisterInner() {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const errs: typeof errors = validateProfile(draft);
-    if (!terms) errs.terms = "Please accept the terms to continue.";
+    const errs: typeof errors = validateProfile(draft, t);
+    if (!terms) errs.terms = t.register.errTerms;
     setErrors(errs);
     if (Object.keys(errs).length) return;
     setBusy(true);
@@ -58,10 +60,10 @@ function RegisterInner() {
     });
     setBusy(false);
     if (!r.ok) {
-      toast.error(r.status === 403 ? "This account is suspended." : "Couldn't save your profile. Please try again.");
+      toast.error(r.status === 403 ? t.register.errSuspended : t.register.errSave);
       return;
     }
-    toast.success("Welcome to techzup.space!");
+    toast.success(t.register.welcome);
     await refresh();
     goTo(next, router.replace);
   };
@@ -73,10 +75,12 @@ function RegisterInner() {
         <form onSubmit={submit} noValidate>
           <Card className="tz-panel">
             <CardHeader>
-              <p className="text-xs font-medium uppercase tracking-widest text-[#4cc3ff]">Step 2 of 2</p>
-              <CardTitle className="font-[family-name:var(--font-display)] text-2xl">Create your profile</CardTitle>
+              <p className="text-xs font-medium uppercase tracking-widest text-[#4cc3ff]">{t.register.step}</p>
+              <CardTitle className="font-[family-name:var(--font-display)] text-2xl">{t.register.title}</CardTitle>
               <CardDescription>
-                Signed in as <span className="text-foreground">{identity?.email ?? identity?.name ?? "…"}</span>. Tell us a little about you.
+                {fillNodes(t.register.signedInAs, {
+                  who: <span className="text-foreground">{identity?.email ?? identity?.name ?? "…"}</span>,
+                })}
               </CardDescription>
             </CardHeader>
             <CardContent className="grid gap-6">
@@ -89,8 +93,13 @@ function RegisterInner() {
                     <div className="flex items-start gap-3">
                       <Checkbox id="terms" checked={terms} onCheckedChange={(v) => setTerms(v === true)} aria-invalid={!!errors.terms} className="mt-0.5" />
                       <Label htmlFor="terms" className="text-sm font-normal leading-relaxed">
-                        I agree to the <Link href="/terms" target="_blank" className="underline underline-offset-2">terms &amp; privacy notice</Link>,
-                        including how techzup.space stores my profile.
+                        {fillNodes(t.register.agree, {
+                          link: (
+                            <Link href="/terms" target="_blank" className="underline underline-offset-2">
+                              {t.auth.agreeLink}
+                            </Link>
+                          ),
+                        })}
                       </Label>
                     </div>
                     {errors.terms && <p className="text-xs text-destructive">{errors.terms}</p>}
@@ -100,7 +109,7 @@ function RegisterInner() {
             </CardContent>
             <CardFooter className="justify-end">
               <Button type="submit" size="lg" disabled={busy || status !== "needs-registration"}>
-                {busy && <Loader2 className="size-4 animate-spin" />} Create account
+                {busy && <Loader2 className="size-4 animate-spin" />} {t.register.submit}
               </Button>
             </CardFooter>
           </Card>

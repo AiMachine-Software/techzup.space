@@ -24,12 +24,17 @@ import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { TestHistory } from "@/components/test-history";
 import { useAuth } from "@/lib/auth-context";
+import { fill, useSiteI18n } from "@/lib/i18n";
 import type { InterestId } from "@/lib/interests";
 
-const fmt = (ms: number) => new Date(ms).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+
+const providerLabel = (p: string) =>
+  ({ "google.com": "Google", "facebook.com": "Facebook", "twitter.com": "X", dev: "dev" })[p] ?? p;
 
 export default function AccountPage() {
   const { status, profile, isAdmin, api, refresh, signOut } = useAuth();
+  const { t, date } = useSiteI18n();
+  const a = t.account;
   const router = useRouter();
   const [draft, setDraft] = useState<ProfileDraft | null>(null);
   const [errors, setErrors] = useState<ProfileErrors>({});
@@ -54,23 +59,23 @@ export default function AccountPage() {
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!draft) return;
-    const errs = validateProfile(draft);
+    const errs = validateProfile(draft, t);
     setErrors(errs);
     if (Object.keys(errs).length) return;
     setBusy(true);
     const r = await api("/users/me", { method: "PATCH", body: JSON.stringify({ ...draft, country: draft.country || null }) });
     setBusy(false);
     if (r.ok) {
-      toast.success("Profile saved");
+      toast.success(a.saved);
       await refresh();
-    } else toast.error("Couldn't save. Please try again.");
+    } else toast.error(a.saveError);
   };
 
   const deleteAccount = async () => {
     const r = await api("/users/me", { method: "DELETE" });
-    if (!r.ok) return toast.error("Couldn't delete your account.");
+    if (!r.ok) return toast.error(a.deleteError);
     await signOut();
-    toast.success("Your account was deleted.");
+    toast.success(a.deleted);
     router.replace("/");
   };
 
@@ -90,16 +95,16 @@ export default function AccountPage() {
                 </Avatar>
                 <div className="min-w-0 flex-1">
                   <h1 className="break-words font-[family-name:var(--font-display)] text-xl font-bold sm:truncate sm:text-2xl">{profile.displayName}</h1>
-                  <p className="break-all text-sm text-muted-foreground sm:truncate">@{profile.nickname} · {profile.email ?? "no email"}</p>
+                  <p className="break-all text-sm text-muted-foreground sm:truncate">@{profile.nickname} · {profile.email ?? a.noEmail}</p>
                   <div className="mt-2 flex flex-wrap gap-2">
-                    <Badge variant="secondary" className="capitalize">{profile.role}</Badge>
-                    <Badge variant="outline">Signed in with {profile.provider.replace(".com", "")}</Badge>
-                    <Badge variant="outline">Member since {fmt(profile.createdAt)}</Badge>
+                    <Badge variant="secondary">{a.roles[profile.role]}</Badge>
+                    <Badge variant="outline">{fill(a.signedInWith, { provider: providerLabel(profile.provider) })}</Badge>
+                    <Badge variant="outline">{fill(a.memberSince, { date: date(profile.createdAt) })}</Badge>
                   </div>
                 </div>
                 {isAdmin && (
                   <Button variant="outline" onClick={() => router.push("/admin/users")}>
-                    <Shield className="size-4" /> User management
+                    <Shield className="size-4" /> {t.nav.userManagement}
                   </Button>
                 )}
               </CardContent>
@@ -110,38 +115,38 @@ export default function AccountPage() {
             <form onSubmit={save} noValidate>
               <Card className="tz-panel">
                 <CardHeader>
-                  <CardTitle>Profile &amp; preferences</CardTitle>
-                  <CardDescription>Update how you appear and what you follow.</CardDescription>
+                  <CardTitle>{a.profileTitle}</CardTitle>
+                  <CardDescription>{a.profileDesc}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <ProfileFields draft={draft} errors={errors} onChange={setDraft} />
                 </CardContent>
                 <CardFooter className="justify-end">
-                  <Button type="submit" disabled={busy}>{busy && <Loader2 className="size-4 animate-spin" />} Save changes</Button>
+                  <Button type="submit" disabled={busy}>{busy && <Loader2 className="size-4 animate-spin" />} {a.save}</Button>
                 </CardFooter>
               </Card>
             </form>
 
             <Card className="border-destructive/40 tz-panel">
               <CardHeader>
-                <CardTitle>Delete account</CardTitle>
-                <CardDescription>Permanently removes your profile and sign-in. This can&apos;t be undone.</CardDescription>
+                <CardTitle>{a.deleteTitle}</CardTitle>
+                <CardDescription>{a.deleteDesc}</CardDescription>
               </CardHeader>
               <CardFooter>
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
-                    <Button variant="destructive"><Trash2 className="size-4" /> Delete my account</Button>
+                    <Button variant="destructive"><Trash2 className="size-4" /> {a.deleteButton}</Button>
                   </AlertDialogTrigger>
                   <AlertDialogContent>
                     <AlertDialogHeader>
-                      <AlertDialogTitle>Delete your techzup.space account?</AlertDialogTitle>
+                      <AlertDialogTitle>{a.deleteConfirmTitle}</AlertDialogTitle>
                       <AlertDialogDescription>
-                        Your profile and preferences will be removed permanently and you&apos;ll be signed out.
+                        {a.deleteConfirmDesc}
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={deleteAccount}>Delete permanently</AlertDialogAction>
+                      <AlertDialogCancel>{a.cancel}</AlertDialogCancel>
+                      <AlertDialogAction onClick={deleteAccount}>{a.deleteForever}</AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>
                 </AlertDialog>

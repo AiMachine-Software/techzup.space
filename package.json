@@ -2,15 +2,24 @@
   "name": "techzup.space",
   "private": true,
   "packageManager": "bun@1.4.5",
-  "engines": { "bun": ">=1.4.0" },
-  "workspaces": ["apps/*", "packages/*"],
+  "engines": {
+    "bun": ">=1.4.0"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
     "dev": "bun --filter web dev",
     "dev:api": "bun --filter @techzup/api dev",
     "build": "bun --filter web build",
     "start": "bun --filter web start",
     "typecheck": "bun --filter '*' typecheck",
-    "lint": "bun --filter web lint"
+    "lint": "bun --filter web lint",
+    "test:e2e": "bun --filter @techzup/api test:e2e"
   },
-  "trustedDependencies": ["sharp", "unrs-resolver"]
+  "trustedDependencies": [
+    "sharp",
+    "unrs-resolver"
+  ]
 }

@@ -339,3 +339,105 @@ body {
 .dark button[data-variant="default"] {
   box-shadow: 0 0 22px -4px rgba(30, 155, 255, 0.7);
 }
+
+/* ==========================================================================
+   Platform themes — html[data-theme] = cyberpunk ("Space", default) | dark | light
+   Shared with the AI-Psychosis Test through localStorage "ai-psy-theme".
+   ========================================================================== */
+.tz-header,
+.tz-footer {
+  background-color: color-mix(in srgb, var(--tz-ink) 78%, transparent);
+}
+.tz-sheet {
+  background-color: color-mix(in srgb, var(--tz-ink) 95%, transparent);
+}
+
+/* ---- Dark: calm, no starfield / lasers ---- */
+html[data-theme="dark"] {
+  --tz-ink: #0c0f16;
+}
+html[data-theme="dark"] .tz-space {
+  background: radial-gradient(ellipse 80% 50% at 50% 0%, rgba(30, 155, 255, 0.08), transparent 70%), var(--tz-ink);
+}
+html[data-theme="dark"] .tz-stars,
+html[data-theme="dark"] .tz-horizon,
+html[data-theme="dark"] .tz-laser {
+  display: none;
+}
+html[data-theme="dark"] .tz-panel-glow {
+  box-shadow: 0 0 0 1px rgba(30, 155, 255, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+/* ---- Light ---- */
+html[data-theme="light"] {
+  --tz-ink: #f4f7fc;
+  --primary: oklch(0.55 0.2 255);
+  --primary-foreground: oklch(0.99 0 0);
+  --ring: oklch(0.55 0.2 255);
+  --border: oklch(0.55 0.12 255 / 0.22);
+}
+html[data-theme="light"] body {
+  background-color: var(--tz-ink);
+}
+html[data-theme="light"] .tz-space {
+  background:
+    radial-gradient(ellipse 55% 40% at 0% 15%, rgba(30, 110, 255, 0.12), transparent 70%),
+    radial-gradient(ellipse 50% 40% at 100% 20%, rgba(255, 70, 50, 0.08), transparent 70%),
+    var(--tz-ink);
+}
+html[data-theme="light"] .tz-stars {
+  display: none;
+}
+html[data-theme="light"] .tz-horizon {
+  opacity: 0.35;
+}
+html[data-theme="light"] .tz-laser {
+  opacity: 0.55;
+}
+html[data-theme="light"] .tz-header,
+html[data-theme="light"] .tz-footer,
+html[data-theme="light"] .tz-sheet {
+  background-color: rgba(255, 255, 255, 0.85);
+}
+html[data-theme="light"] .tz-panel {
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.95), rgba(240, 245, 252, 0.95));
+  border-color: rgba(30, 110, 255, 0.2);
+  box-shadow: 0 10px 40px -18px rgba(15, 40, 90, 0.35);
+}
+html[data-theme="light"] .tz-panel-glow {
+  box-shadow: 0 0 0 1px rgba(30, 120, 255, 0.25), 0 18px 50px -20px rgba(30, 120, 255, 0.45);
+}
+html[data-theme="light"] .tz-stat {
+  background: rgba(255, 255, 255, 0.7);
+  border-color: rgba(15, 40, 90, 0.12);
+}
+/* wordmark on light: ink "Tech", deeper blue "Zup" */
+html[data-theme="light"] .tz-wordmark .tz-tech {
+  color: #0b1424;
+  text-shadow: 0 1px 0 #9cc6ff, 0 2px 0 #3b82f6;
+}
+html[data-theme="light"] .tz-wordmark .tz-zup {
+  color: #0a72e8;
+  text-shadow: 0 1px 0 #064fb0, 0 0 14px rgba(30, 155, 255, 0.35);
+}
+html[data-theme="light"] .tz-wordmark .tz-tld {
+  color: rgba(11, 20, 36, 0.5);
+}
+html[data-theme="light"] .tz-glow-blue {
+  color: #0a72e8;
+  text-shadow: 0 0 18px rgba(30, 155, 255, 0.35);
+}
+/* hard-coded white / sky text → readable ink & blue on light (LLM Wars art stays dark) */
+html[data-theme="light"] .text-white:not(.tz-keep-dark *):not(.ai-test-root *) {
+  color: var(--foreground);
+}
+html[data-theme="light"] [class*="text-[#4cc3ff]"]:not(.tz-keep-dark *):not(.ai-test-root *) {
+  color: #0a6fd6;
+}
+html[data-theme="light"] [class*="text-[#ff7a6b]"]:not(.ai-test-root *),
+html[data-theme="light"] [class*="text-[#ff6b5b]"]:not(.ai-test-root *) {
+  color: #d63a2a;
+}
+html[data-theme="light"] [class*="text-[#f7c548]"]:not(.tz-keep-dark *):not(.ai-test-root *) {
+  color: #a8740a;
+}
