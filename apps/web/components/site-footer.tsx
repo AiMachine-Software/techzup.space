@@ -22,6 +22,8 @@ export function SiteFooter() {
             <a href="/ai-psychosis-test" className="text-muted-foreground hover:text-foreground">{t.nav.aiTest}</a>
             <Link href="/login" className="text-muted-foreground hover:text-foreground">{t.nav.signIn}</Link>
             <Link href="/terms" className="text-muted-foreground hover:text-foreground">{t.footer.terms}</Link>
+            <Link href="/privacy" className="text-muted-foreground hover:text-foreground">Privacy</Link>
+            <Link href="/data-deletion" className="text-muted-foreground hover:text-foreground">Data deletion</Link>
           </div>
         </div>
         <p className="border-t border-[#1e9bff]/15 pt-6 text-center text-xs text-muted-foreground">
