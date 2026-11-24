@@ -27,14 +27,16 @@ const Profile = {
 const RoleT = t.Union([t.Literal("reader"), t.Literal("editor"), t.Literal("admin")]);
 const StatusT = t.Union([t.Literal("active"), t.Literal("suspended")]);
 
+/** ADMIN_EMAILS only counts for a verified email — otherwise anyone could sign up with that address. */
+const isAdminEmail = (a: AuthUser) => a.emailVerified && !!a.email && adminEmails().includes(a.email.toLowerCase());
+
 const isAdmin = async (a: AuthUser) => {
-  if (a.email && adminEmails().includes(a.email.toLowerCase())) return true;
+  if (isAdminEmail(a)) return true;
   return (await users().get(a.uid))?.role === "admin";
 };
 
 /** Seed role: emails listed in ADMIN_EMAILS become admin on registration. */
-const initialRole = (a: AuthUser): Role =>
-  a.email && adminEmails().includes(a.email.toLowerCase()) ? "admin" : "reader";
+const initialRole = (a: AuthUser): Role => (isAdminEmail(a) ? "admin" : "reader");
 
 async function syncAuthUser(uid: string, role: Role, statusV: UserStatus) {
   const auth = privilegedAuth();
@@ -75,6 +77,7 @@ export const app = new Elysia({ prefix: "/api" })
     { body: t.Object({ ...Profile, acceptTerms: t.Literal(true) }) },
     async ({ auth, body }) => {
       if (!auth) return status(401, { error: "unauthorized" });
+      if (auth.provider === "password" && !auth.emailVerified) return status(403, { error: "email_not_verified" });
       const existing = await users().get(auth.uid);
       if (existing?.status === "suspended") return status(403, { error: "suspended" });
       const now = Date.now();

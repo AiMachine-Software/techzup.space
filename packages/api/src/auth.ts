@@ -7,6 +7,8 @@ export interface AuthUser {
   name: string | null;
   picture: string | null;
   provider: string;
+  /** Firebase "email_verified" — required for email-based admin rights and email/password registration. */
+  emailVerified: boolean;
 }
 
 /**
@@ -28,6 +30,7 @@ async function verify(token: string): Promise<AuthUser | null> {
       name: email.split("@")[0],
       picture: null,
       provider: "dev",
+      emailVerified: true,
     };
   }
   const auth = adminAuth();
@@ -41,6 +44,7 @@ async function verify(token: string): Promise<AuthUser | null> {
       name: (d.name as string | undefined) ?? null,
       picture: d.picture ?? null,
       provider: d.firebase?.sign_in_provider ?? "unknown",
+      emailVerified: d.email_verified === true,
     };
   } catch {
     return null;

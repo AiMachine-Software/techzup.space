@@ -37,6 +37,7 @@ function RegisterInner() {
   useEffect(() => {
     if (status === "signed-out") router.replace(`/login?next=${encodeURIComponent(next === "/account" ? "/register" : next)}`);
     if (status === "ready") goTo(next, router.replace);
+    if (status === "needs-verification") router.replace(`/login?next=${encodeURIComponent(next)}`);
   }, [status, router, next]);
 
   // Prefill from the social account once

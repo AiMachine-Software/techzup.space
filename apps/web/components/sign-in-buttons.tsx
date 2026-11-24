@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FacebookIcon, GoogleIcon, XIcon } from "@/components/brand-icons";
+import { EmailAuthForm } from "@/components/email-auth";
 import { useAuth } from "@/lib/auth-context";
 import { devAuthEnabled, firebaseEnabled, type ProviderId } from "@/lib/firebase";
 import { useSiteI18n, type SiteDict } from "@/lib/i18n";
@@ -60,6 +61,17 @@ export function SignInButtons() {
           {t.auth[key]}
         </Button>
       ))}
+
+      {firebaseEnabled && (
+        <>
+          <div className="my-2 flex items-center gap-3 text-xs uppercase tracking-wider text-muted-foreground">
+            <span className="h-px flex-1 bg-border" />
+            {t.email.or}
+            <span className="h-px flex-1 bg-border" />
+          </div>
+          <EmailAuthForm />
+        </>
+      )}
 
       {!firebaseEnabled && !devAuthEnabled && (
         <p className="mt-1 text-center text-xs text-muted-foreground">{t.auth.notConfigured}</p>

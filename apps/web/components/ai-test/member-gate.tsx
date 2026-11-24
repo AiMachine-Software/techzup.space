@@ -52,6 +52,8 @@ export function MemberGate() {
     </div>
   );
 
+  if (status === "needs-verification")
+    return box(g.verifyTitle, g.verifyBody, { href: `/login?next=${encodeURIComponent(NEXT)}`, label: g.verifyCta });
   if (status === "needs-registration")
     return box(g.finishTitle, g.finishBody, { href: `/register?next=${encodeURIComponent(NEXT)}`, label: g.finish });
   if (status === "suspended") return box(g.title, g.suspended);

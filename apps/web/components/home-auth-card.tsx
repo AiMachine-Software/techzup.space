@@ -5,6 +5,7 @@ import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AgreeNote, SignInButtons } from "@/components/sign-in-buttons";
+import { VerifyEmailCard } from "@/components/email-auth";
 import { useAuth } from "@/lib/auth-context";
 import { fill, useSiteI18n } from "@/lib/i18n";
 
@@ -34,6 +35,15 @@ export function HomeAuthCard() {
       </Card>
     );
   }
+
+  if (status === "needs-verification")
+    return (
+      <Card className="tz-panel tz-panel-glow">
+        <CardContent className="pt-6">
+          <VerifyEmailCard />
+        </CardContent>
+      </Card>
+    );
 
   if (status === "error")
     return (

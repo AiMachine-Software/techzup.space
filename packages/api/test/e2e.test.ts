@@ -13,7 +13,8 @@ const RUN = `e2e-${Date.now().toString(36)}`;
 const WEB_API_KEY = process.env.E2E_WEB_API_KEY!;
 const LIVE_URL = process.env.E2E_LIVE_URL ?? "https://techzup.space";
 const ADMIN_EMAIL = `admin.${RUN}@e2e.techzup.test`;
-process.env.ADMIN_EMAILS = ADMIN_EMAIL;
+const SPOOF_ADMIN_EMAIL = `owner.${RUN}@e2e.techzup.test`;
+process.env.ADMIN_EMAILS = `${ADMIN_EMAIL},${SPOOF_ADMIN_EMAIL}`;
 
 if (!process.env.FIREBASE_SERVICE_ACCOUNT || !WEB_API_KEY) throw new Error("Run via `bun run test:e2e`");
 
@@ -51,6 +52,19 @@ async function tokenFor(uid: string): Promise<string> {
   const j = (await r.json()) as { idToken?: string; error?: { message: string } };
   if (!r.ok || !j.idToken) throw new Error(`signInWithCustomToken: ${j.error?.message ?? r.status}`);
   return j.idToken;
+}
+
+/** Random throwaway password (never logged). */
+const randomPassword = () => `Tz!${crypto.randomUUID()}`;
+
+async function identity(path: string, body: Record<string, unknown>) {
+  const r = await fetch(`https://identitytoolkit.googleapis.com/v1/${path}?key=${WEB_API_KEY}`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  const j = (await r.json()) as { localId?: string; idToken?: string; email?: string; error?: { message: string } };
+  return { ok: r.ok, ...j };
 }
 
 async function call<T = Record<string, unknown>>(method: string, path: string, token?: string, body?: unknown) {
@@ -346,5 +360,78 @@ describe("live deployment", () => {
     expect(r.status).not.toBe(401);
     expect(health.firestore ? 200 : 503).toBe(r.status);
     if (!health.firestore) console.log("   note: live site has no FIREBASE_SERVICE_ACCOUNT yet (Firestore off on Vercel)");
+  });
+});
+
+describe("email / password accounts (Firebase Auth password provider)", () => {
+  const pwEmail = `pw.${RUN}@e2e.techzup.test`;
+  const pwPassword = randomPassword();
+  let pw: Session;
+
+  test("sign-up creates a real password account; token has provider=password, unverified", async () => {
+    const r = await identity("accounts:signUp", { email: pwEmail, password: pwPassword, returnSecureToken: true });
+    expect(r.ok).toBe(true);
+    created.add(r.localId!);
+    pw = { uid: r.localId!, email: pwEmail, idToken: r.idToken! };
+    const me = await call<{ error: string; auth: { provider: string; emailVerified: boolean } }>("GET", "/users/me", pw.idToken);
+    expect(me.status).toBe(404);
+    expect(me.data.auth.provider).toBe("password");
+    expect(me.data.auth.emailVerified).toBe(false);
+  });
+
+  test("duplicate sign-up and weak passwords are refused by Firebase", async () => {
+    expect((await identity("accounts:signUp", { email: pwEmail, password: randomPassword() })).error?.message).toBe("EMAIL_EXISTS");
+    expect((await identity("accounts:signUp", { email: `weak.${RUN}@e2e.techzup.test`, password: "123" })).error?.message).toMatch(/WEAK_PASSWORD/);
+  });
+
+  test("wrong password is refused; right password signs in", async () => {
+    expect((await identity("accounts:signInWithPassword", { email: pwEmail, password: "wrong-" + randomPassword() })).ok).toBe(false);
+    const ok = await identity("accounts:signInWithPassword", { email: pwEmail, password: pwPassword, returnSecureToken: true });
+    expect(ok.ok).toBe(true);
+    expect(ok.localId).toBe(pw.uid);
+  });
+
+  test("verification and password-reset emails can be requested", async () => {
+    expect((await identity("accounts:sendOobCode", { requestType: "VERIFY_EMAIL", idToken: pw.idToken })).ok).toBe(true);
+    expect((await identity("accounts:sendOobCode", { requestType: "PASSWORD_RESET", email: pwEmail })).ok).toBe(true);
+  });
+
+  test("an unverified email can't register", async () => {
+    const r = await call<{ error: string }>("POST", "/users/register", pw.idToken, profile(`${RUN}-pw`, "Password User"));
+    expect(r.status).toBe(403);
+    expect(r.data.error).toBe("email_not_verified");
+    expect((await users().doc(pw.uid).get()).exists).toBe(false);
+  });
+
+  test("after verification the account registers and is saved to Firestore", async () => {
+    await adminAuth()!.updateUser(pw.uid, { emailVerified: true }); // what clicking the email link does
+    const fresh = await identity("accounts:signInWithPassword", { email: pwEmail, password: pwPassword, returnSecureToken: true });
+    pw.idToken = fresh.idToken!;
+    const r = await call<{ user: { provider: string; role: string } }>("POST", "/users/register", pw.idToken, profile(`${RUN}-pw`, "Password User"));
+    expect(r.status).toBe(200);
+    expect(r.data.user.provider).toBe("password");
+    expect(r.data.user.role).toBe("reader");
+    expect((await users().doc(pw.uid).get()).data()!.provider).toBe("password");
+  });
+
+  test("an unverified sign-up using an ADMIN_EMAILS address does NOT get admin", async () => {
+    const pass = randomPassword();
+    const r = await identity("accounts:signUp", { email: SPOOF_ADMIN_EMAIL, password: pass, returnSecureToken: true });
+    created.add(r.localId!);
+    expect((await call("GET", "/users/me", r.idToken)).status).toBe(404);
+    expect((await call("GET", "/admin/users", r.idToken)).status).toBe(403);
+    expect((await call("POST", "/users/register", r.idToken, profile(`${RUN}-sp`, "Spoof"))).status).toBe(403);
+
+    // once the inbox owner verifies, the same address does become admin
+    await adminAuth()!.updateUser(r.localId!, { emailVerified: true });
+    const fresh = await identity("accounts:signInWithPassword", { email: SPOOF_ADMIN_EMAIL, password: pass, returnSecureToken: true });
+    const reg = await call<{ user: { role: string } }>("POST", "/users/register", fresh.idToken, profile(`${RUN}-ow`, "Owner"));
+    expect(reg.data.user.role).toBe("admin");
+  });
+
+  test("a suspended password account can't sign in", async () => {
+    await adminAuth()!.updateUser(pw.uid, { disabled: true });
+    expect((await identity("accounts:signInWithPassword", { email: pwEmail, password: pwPassword })).error?.message).toBe("USER_DISABLED");
+    await adminAuth()!.updateUser(pw.uid, { disabled: false });
   });
 });

@@ -104,7 +104,7 @@ export function SiteHeader() {
   const { t } = useSiteI18n();
   const router = useRouter();
   const name = profile?.nickname ?? identity?.name ?? identity?.email ?? "";
-  const signedIn = status === "ready" || status === "needs-registration";
+  const signedIn = status === "ready" || status === "needs-registration" || status === "needs-verification";
 
   return (
     <header className="tz-header sticky top-0 z-40 border-b border-[#1e9bff]/20 backdrop-blur-xl">
@@ -142,7 +142,11 @@ export function SiteHeader() {
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel className="truncate">{name}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                {status === "needs-registration" ? (
+                {status === "needs-verification" ? (
+                  <DropdownMenuItem onSelect={() => router.push("/login")}>
+                    <UserRound /> {t.email.verifyTitle}
+                  </DropdownMenuItem>
+                ) : status === "needs-registration" ? (
                   <DropdownMenuItem onSelect={() => router.push("/register")}>
                     <UserRound /> {t.nav.finishRegistration}
                   </DropdownMenuItem>

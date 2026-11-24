@@ -5,16 +5,25 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Logo } from "@/components/site-header";
 import { AgreeNote, SignInButtons } from "@/components/sign-in-buttons";
+import { VerifyEmailCard } from "@/components/email-auth";
 import { useSiteI18n } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth-context";
 import { goTo, safeNext } from "@/lib/next-path";
 
 
 function LoginInner() {
-  const { status } = useAuth();
+  const { status, checkVerified, refresh } = useAuth();
   const { t } = useSiteI18n();
   const router = useRouter();
-  const next = safeNext(useSearchParams().get("next"));
+  const params = useSearchParams();
+  const next = safeNext(params.get("next"));
+  const cameFromVerifyLink = params.get("verified") === "1";
+
+  // Back from the verification email link: re-check with Firebase automatically.
+  useEffect(() => {
+    if (status === "needs-verification" && cameFromVerifyLink)
+      void checkVerified().then((ok) => ok && refresh());
+  }, [status, cameFromVerifyLink, checkVerified, refresh]);
 
   useEffect(() => {
     if (status === "needs-registration")
@@ -35,6 +44,8 @@ function LoginInner() {
           <p className="rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm">
             {t.login.suspended}
           </p>
+        ) : status === "needs-verification" ? (
+          <VerifyEmailCard />
         ) : status === "error" ? (
           <p className="rounded-md border border-amber-400/50 bg-amber-400/10 p-3 text-sm">
             {t.login.unavailable}
