@@ -22,7 +22,9 @@ function LoginInner() {
   // Back from the verification email link: re-check with Firebase automatically.
   useEffect(() => {
     if (status === "needs-verification" && cameFromVerifyLink)
-      void checkVerified().then((ok) => ok && refresh());
+      void checkVerified().then((ok) => {
+        if (ok) void refresh();
+      });
   }, [status, cameFromVerifyLink, checkVerified, refresh]);
 
   useEffect(() => {
