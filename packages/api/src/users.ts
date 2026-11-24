@@ -22,6 +22,23 @@ export interface UserProfile {
   lastLoginAt: number;
 }
 
+export type TestGrade = "SSS" | "S" | "A" | "B" | "C" | "D";
+export type TestVerdict = "balanced" | "watch" | "ai" | "anti" | "doomloop";
+
+/** One AI-Psychosis Test result, stored at users/{uid}/testResults/{finishedAt}. */
+export interface TestResult {
+  id: string;
+  ai: number;
+  anti: number;
+  verdict: TestVerdict;
+  grade: TestGrade;
+  clarity: number;
+  timedOut: boolean;
+  lang: string;
+  finishedAt: number;
+  savedAt: number;
+}
+
 export interface ListQuery {
   q?: string;
   role?: Role;
@@ -37,6 +54,15 @@ export interface UserStore {
   remove(uid: string): Promise<void>;
   list(q: ListQuery): Promise<{ users: UserProfile[]; total: number }>;
   all(): Promise<UserProfile[]>;
+  saveResult(uid: string, r: TestResult): Promise<void>;
+  results(uid: string, limit: number): Promise<TestResult[]>;
+}
+
+/** Thrown when production has no Firestore credentials; mapped to HTTP 503. */
+export class StorageUnavailable extends Error {
+  constructor() {
+    super("storage_not_configured");
+  }
 }
 
 /** Most recent users scanned for search/stats. Fine for a magazine-sized audience. */
@@ -72,7 +98,8 @@ class FirestoreStore implements UserStore {
     return { ...(snap.data() as UserProfile), ...patch };
   }
   async remove(uid: string) {
-    await this.col().doc(uid).delete();
+    // Delete the profile and its test results.
+    await db()!.recursiveDelete(this.col().doc(uid));
   }
   async all() {
     const snap = await this.col().orderBy("createdAt", "desc").limit(SCAN_LIMIT).get();
@@ -82,11 +109,19 @@ class FirestoreStore implements UserStore {
     const rows = (await this.all()).filter((u) => matches(u, q));
     return { users: rows.slice(q.offset, q.offset + q.limit), total: rows.length };
   }
+  async saveResult(uid: string, r: TestResult) {
+    await this.col().doc(uid).collection("testResults").doc(r.id).set(r);
+  }
+  async results(uid: string, limit: number) {
+    const snap = await this.col().doc(uid).collection("testResults").orderBy("finishedAt", "desc").limit(limit).get();
+    return snap.docs.map((d) => d.data() as TestResult);
+  }
 }
 
 /** In-memory store for local development without Firebase credentials. */
 class MemoryStore implements UserStore {
   private m = new Map<string, UserProfile>();
+  private r = new Map<string, Map<string, TestResult>>();
   async get(uid: string) {
     return this.m.get(uid) ?? null;
   }
@@ -102,6 +137,7 @@ class MemoryStore implements UserStore {
   }
   async remove(uid: string) {
     this.m.delete(uid);
+    this.r.delete(uid);
   }
   async all() {
     return [...this.m.values()].sort((a, b) => b.createdAt - a.createdAt);
@@ -110,10 +146,20 @@ class MemoryStore implements UserStore {
     const rows = (await this.all()).filter((u) => matches(u, q));
     return { users: rows.slice(q.offset, q.offset + q.limit), total: rows.length };
   }
+  async saveResult(uid: string, r: TestResult) {
+    if (!this.r.has(uid)) this.r.set(uid, new Map());
+    this.r.get(uid)!.set(r.id, r);
+  }
+  async results(uid: string, limit: number) {
+    return [...(this.r.get(uid)?.values() ?? [])].sort((a, b) => b.finishedAt - a.finishedAt).slice(0, limit);
+  }
 }
 
 let store: UserStore | undefined;
 export function users(): UserStore {
-  if (!store) store = db() ? new FirestoreStore() : new MemoryStore();
-  return store;
+  if (store) return store;
+  if (db()) return (store = new FirestoreStore());
+  // Memory store only outside production — a serverless deploy would silently lose data.
+  if (process.env.NODE_ENV !== "production") return (store = new MemoryStore());
+  throw new StorageUnavailable();
 }

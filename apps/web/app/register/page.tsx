@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -12,10 +12,20 @@ import { Label } from "@/components/ui/label";
 import { ProfileFields, validateProfile, type ProfileDraft, type ProfileErrors } from "@/components/profile-fields";
 import { SiteHeader } from "@/components/site-header";
 import { useAuth } from "@/lib/auth-context";
+import { goTo, safeNext } from "@/lib/next-path";
 
 export default function RegisterPage() {
+  return (
+    <Suspense>
+      <RegisterInner />
+    </Suspense>
+  );
+}
+
+function RegisterInner() {
   const { status, identity, api, refresh } = useAuth();
   const router = useRouter();
+  const next = safeNext(useSearchParams().get("next"));
   const [draft, setDraft] = useState<ProfileDraft>({ nickname: "", displayName: "", country: "", interests: ["ai", "ml"], newsletter: true });
   const [terms, setTerms] = useState(false);
   const [errors, setErrors] = useState<ProfileErrors & { terms?: string }>({});
@@ -23,9 +33,9 @@ export default function RegisterPage() {
   const [prefilled, setPrefilled] = useState(false);
 
   useEffect(() => {
-    if (status === "signed-out") router.replace("/login?next=/register");
-    if (status === "ready") router.replace("/account");
-  }, [status, router]);
+    if (status === "signed-out") router.replace(`/login?next=${encodeURIComponent(next === "/account" ? "/register" : next)}`);
+    if (status === "ready") goTo(next, router.replace);
+  }, [status, router, next]);
 
   // Prefill from the social account once
   useEffect(() => {
@@ -53,7 +63,7 @@ export default function RegisterPage() {
     }
     toast.success("Welcome to techzup.space!");
     await refresh();
-    router.replace("/account");
+    goTo(next, router.replace);
   };
 
   return (

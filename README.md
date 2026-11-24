@@ -31,7 +31,9 @@ All routes are under `/api` and take `Authorization: Bearer <Firebase ID token>`
 | GET | `/users/me` | signed in | profile (`404 not_registered` until registration) |
 | POST | `/users/register` | signed in | create/complete profile (requires `acceptTerms: true`) |
 | PATCH | `/users/me` | member | update profile & preferences |
-| DELETE | `/users/me` | member | delete own account (profile + Firebase user) |
+| DELETE | `/users/me` | member | delete own account (profile, test results, Firebase user) |
+| GET | `/results` | member | own AI-Psychosis Test results (latest 20) |
+| POST | `/results` | member | save a finished test (id = finishedAt, so re-sends don't duplicate) |
 | GET | `/admin/stats` | admin | totals by role, status, provider |
 | GET | `/admin/users?q=&role=&status=&limit=&offset=` | admin | search & page members |
 | PATCH | `/admin/users/:uid` | admin | change `role` (reader/editor/admin) or `status` (active/suspended) |
@@ -52,14 +54,27 @@ bun run dev:api                                 # optional: API alone on http://
 No Firebase project yet? Set `AUTH_DEV_MODE=1` and `NEXT_PUBLIC_AUTH_DEV_MODE=1` in `.env.local` to sign in with
 any email and keep users in memory. This is ignored in production.
 
+## Members-only test
+
+`/ai-psychosis-test` is open to read, but the test itself unlocks only for registered, active members. Visitors
+see a sign-in / registration gate that returns them to the test afterwards; finished results are saved to
+`users/{uid}/testResults` in Firestore and listed on **My account**. The gate is enforced in the browser; saving
+results is enforced by the API.
+
 ## Firebase setup
+
+Project: **techzup-space-web**. The web config is public and is set as `NEXT_PUBLIC_FIREBASE_*` env vars.
+
 
 1. Create a Firebase project and a **Web app**; copy its config into the `NEXT_PUBLIC_FIREBASE_*` variables.
 2. **Authentication → Sign-in method**: enable **Google**, **Facebook** (Meta app ID/secret) and **Twitter/X**
    (X API key/secret). Add each provider's OAuth redirect URI shown by Firebase to the Meta / X developer consoles.
 3. **Authentication → Settings → Authorized domains**: add `techzup.space` (and your Vercel preview domain).
-4. **Firestore**: create a database (production mode — only the server writes to it).
-5. **Project settings → Service accounts**: generate a key and put it in `FIREBASE_SERVICE_ACCOUNT`.
+4. **Firestore**: create a database in production mode, then publish `firestore.rules` (Rules tab, or
+   `firebase deploy --only firestore:rules`). The rules deny all browser access; the API uses the Admin SDK.
+5. **Project settings → Service accounts**: generate a key and add the whole JSON to Vercel as
+   `FIREBASE_SERVICE_ACCOUNT` (Sensitive). Without it the API can verify sign-ins but returns
+   `503 storage_not_configured` for anything that needs Firestore.
 
 Instagram sign-in isn't offered: Firebase Auth has no Instagram provider.
 

@@ -7,10 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Logo } from "@/components/site-header";
 import { SignInButtons } from "@/components/sign-in-buttons";
 import { useAuth } from "@/lib/auth-context";
+import { goTo, safeNext } from "@/lib/next-path";
 
-function safeNext(v: string | null) {
-  return v && v.startsWith("/") && !v.startsWith("//") ? v : "/account";
-}
 
 function LoginInner() {
   const { status } = useAuth();
@@ -18,8 +16,9 @@ function LoginInner() {
   const next = safeNext(useSearchParams().get("next"));
 
   useEffect(() => {
-    if (status === "needs-registration") router.replace("/register");
-    else if (status === "ready") router.replace(next === "/register" ? "/account" : next);
+    if (status === "needs-registration")
+      router.replace(next === "/register" || next === "/account" ? "/register" : `/register?next=${encodeURIComponent(next)}`);
+    else if (status === "ready") goTo(next === "/register" ? "/account" : next, router.replace);
   }, [status, next, router]);
 
   return (
@@ -33,6 +32,10 @@ function LoginInner() {
         {status === "suspended" ? (
           <p className="rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm">
             This account is suspended. Contact the techzup.space team if you think this is a mistake.
+          </p>
+        ) : status === "error" ? (
+          <p className="rounded-md border border-amber-400/50 bg-amber-400/10 p-3 text-sm">
+            You&apos;re signed in, but member accounts are temporarily unavailable. Please try again shortly.
           </p>
         ) : (
           <SignInButtons />

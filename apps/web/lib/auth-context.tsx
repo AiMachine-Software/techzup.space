@@ -2,7 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { onIdTokenChanged, signInWithPopup, signOut as fbSignOut, type User } from "firebase/auth";
-import { devAuthEnabled, firebaseAuth, providerFor, type ProviderId } from "@/lib/firebase";
+import { devAuthEnabled, firebaseAuth, providerFor, startAnalytics, type ProviderId } from "@/lib/firebase";
 import type { UserProfile } from "@techzup/api";
 
 export type AuthStatus = "loading" | "signed-out" | "needs-registration" | "ready" | "suspended" | "error";
@@ -39,6 +39,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Firebase (or dev) identity
   useEffect(() => {
+    void startAnalytics();
     if (devAuthEnabled) {
       try {
         setDevEmail(localStorage.getItem(DEV_KEY));

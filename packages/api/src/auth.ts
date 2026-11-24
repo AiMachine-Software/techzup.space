@@ -1,5 +1,5 @@
 import { Elysia } from "elysia";
-import { adminAuth, firebaseConfigured } from "./firebase";
+import { adminAuth, firebaseAdminReady, firebaseConfigured } from "./firebase";
 
 export interface AuthUser {
   uid: string;
@@ -33,7 +33,8 @@ async function verify(token: string): Promise<AuthUser | null> {
   const auth = adminAuth();
   if (!auth) return null;
   try {
-    const d = await auth.verifyIdToken(token, true);
+    // Revocation checks need a service account; without one, signature + expiry are still verified.
+    const d = await auth.verifyIdToken(token, firebaseAdminReady());
     return {
       uid: d.uid,
       email: d.email ?? null,

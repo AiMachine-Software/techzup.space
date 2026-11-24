@@ -47,7 +47,7 @@ function FieldWrap({
   );
 }
 
-export function ProfileForm({ initial }: { initial: Profile | null }) {
+export function ProfileForm({ initial }: { initial: Partial<Profile> | null }) {
   const { t, lang } = useI18n();
   const f = getFormText(lang);
   const uid = useId();

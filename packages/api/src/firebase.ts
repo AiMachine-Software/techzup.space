@@ -3,12 +3,15 @@ import { getAuth, type Auth } from "firebase-admin/auth";
 import { getFirestore, type Firestore } from "firebase-admin/firestore";
 
 /**
- * Firebase Admin, initialised lazily from env:
- *   FIREBASE_SERVICE_ACCOUNT  full service-account JSON (raw or base64)
- *   — or —
- *   FIREBASE_PROJECT_ID + FIREBASE_CLIENT_EMAIL + FIREBASE_PRIVATE_KEY
+ * Firebase Admin, initialised lazily from env.
+ *
+ *   FIREBASE_SERVICE_ACCOUNT  full service-account JSON (raw or base64)  → Auth + Firestore
+ *   — or — FIREBASE_PROJECT_ID + FIREBASE_CLIENT_EMAIL + FIREBASE_PRIVATE_KEY
+ *   — or — FIREBASE_PROJECT_ID (or NEXT_PUBLIC_FIREBASE_PROJECT_ID) alone
+ *            → ID-token verification only (Google's public keys); no Firestore, no user admin.
  */
 let app: App | null | undefined;
+let hasCredential = false;
 
 function readServiceAccount() {
   const raw = process.env.FIREBASE_SERVICE_ACCOUNT?.trim();
@@ -24,22 +27,38 @@ function readServiceAccount() {
   return null;
 }
 
+const projectIdOnly = () => process.env.FIREBASE_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || null;
+
 export function firebaseApp(): App | null {
   if (app !== undefined) return app;
   const sa = readServiceAccount();
-  if (!sa) return (app = null);
-  app = getApps()[0] ?? initializeApp({ credential: cert(sa), projectId: sa.projectId });
+  if (sa) {
+    hasCredential = true;
+    app = getApps()[0] ?? initializeApp({ credential: cert(sa), projectId: sa.projectId });
+    return app;
+  }
+  const pid = projectIdOnly();
+  app = pid ? (getApps()[0] ?? initializeApp({ projectId: pid })) : null;
   return app;
 }
 
+/** Can verify Firebase ID tokens. */
 export const firebaseConfigured = () => firebaseApp() !== null;
+/** Has a service account: Firestore + user administration available. */
+export const firebaseAdminReady = () => firebaseApp() !== null && hasCredential;
 
 export function adminAuth(): Auth | null {
   const a = firebaseApp();
   return a ? getAuth(a) : null;
 }
 
-export function db(): Firestore | null {
-  const a = firebaseApp();
-  return a ? getFirestore(a) : null;
+/** Auth calls that need a credential (custom claims, disable, delete). */
+export function privilegedAuth(): Auth | null {
+  return firebaseAdminReady() ? getAuth(firebaseApp()!) : null;
 }
+
+export function db(): Firestore | null {
+  return firebaseAdminReady() ? getFirestore(firebaseApp()!) : null;
+}
+
+export const firebaseProjectId = () => (firebaseApp()?.options.projectId as string | undefined) ?? null;

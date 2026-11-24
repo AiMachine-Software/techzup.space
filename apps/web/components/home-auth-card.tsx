@@ -28,6 +28,16 @@ export function HomeAuthCard() {
       </Card>
     );
 
+  if (status === "error")
+    return (
+      <Card className="bg-card/70 backdrop-blur">
+        <CardHeader>
+          <CardTitle>Accounts are temporarily unavailable</CardTitle>
+          <CardDescription>You&apos;re signed in, but we couldn&apos;t load your profile. Please try again shortly.</CardDescription>
+        </CardHeader>
+      </Card>
+    );
+
   if (status === "needs-registration")
     return (
       <Card className="bg-card/70 backdrop-blur">

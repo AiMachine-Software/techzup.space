@@ -75,7 +75,10 @@ export default function Home() {
                 <span className="mt-6 inline-flex items-center gap-2 font-medium text-cyan-300">
                   Start the test <ArrowRight className="size-4 transition group-hover:translate-x-1" />
                 </span>
-                <p className="mt-4 text-xs text-muted-foreground">For education and research — not a medical diagnosis.</p>
+                <p className="mt-4 text-xs text-muted-foreground">
+                  Free for techzup.space members — your results are saved to your account. For education and
+                  research, not a medical diagnosis.
+                </p>
               </div>
               <div className="grid grid-cols-2 gap-3 text-center">
                 {[

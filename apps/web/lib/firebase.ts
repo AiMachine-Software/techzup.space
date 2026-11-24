@@ -10,6 +10,10 @@ import {
   type AuthProvider,
 } from "firebase/auth";
 
+/**
+ * Firebase web config. These values are public identifiers (they ship in the browser bundle);
+ * access is controlled by Firebase Auth settings and Firestore rules, not by hiding them.
+ */
 const config = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -17,6 +21,7 @@ const config = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
   messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
   storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
 export const firebaseEnabled = Boolean(config.apiKey && config.authDomain && config.projectId);
@@ -25,10 +30,26 @@ export const firebaseEnabled = Boolean(config.apiKey && config.authDomain && con
 export const devAuthEnabled = !firebaseEnabled && process.env.NEXT_PUBLIC_AUTH_DEV_MODE === "1";
 
 let app: FirebaseApp | null = null;
-export function firebaseAuth(): Auth | null {
+function firebase(): FirebaseApp | null {
   if (!firebaseEnabled) return null;
   app ??= getApps().length ? getApp() : initializeApp(config);
-  return getAuth(app);
+  return app;
+}
+
+export function firebaseAuth(): Auth | null {
+  const a = firebase();
+  return a ? getAuth(a) : null;
+}
+
+let analyticsStarted = false;
+/** Google Analytics for Firebase — production only, and only where the browser supports it. */
+export async function startAnalytics() {
+  if (analyticsStarted || !config.measurementId || process.env.NODE_ENV !== "production") return;
+  const a = firebase();
+  if (!a) return;
+  analyticsStarted = true;
+  const { getAnalytics, isSupported } = await import("firebase/analytics");
+  if (await isSupported()) getAnalytics(a);
 }
 
 export type ProviderId = "google" | "facebook" | "x";

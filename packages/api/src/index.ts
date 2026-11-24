@@ -1,9 +1,9 @@
 import { Elysia, t, status } from "elysia";
 import { adminEmails, authPlugin, isDevAuth, type AuthUser } from "./auth";
-import { adminAuth, firebaseConfigured } from "./firebase";
-import { users, type Role, type UserProfile, type UserStatus } from "./users";
+import { firebaseAdminReady, firebaseConfigured, firebaseProjectId, privilegedAuth } from "./firebase";
+import { StorageUnavailable, users, type Role, type TestResult, type UserProfile, type UserStatus } from "./users";
 
-export type { UserProfile, Role, UserStatus } from "./users";
+export type { UserProfile, Role, UserStatus, TestResult, TestGrade, TestVerdict } from "./users";
 
 const Interest = t.Union([
   t.Literal("ai"),
@@ -37,18 +37,24 @@ const initialRole = (a: AuthUser): Role =>
   a.email && adminEmails().includes(a.email.toLowerCase()) ? "admin" : "reader";
 
 async function syncAuthUser(uid: string, role: Role, statusV: UserStatus) {
-  const auth = adminAuth();
+  const auth = privilegedAuth();
   if (!auth) return;
   await auth.setCustomUserClaims(uid, { role });
   await auth.updateUser(uid, { disabled: statusV === "suspended" });
 }
 
 export const app = new Elysia({ prefix: "/api" })
+  .onError("global", ({ error }) => {
+    if (error instanceof StorageUnavailable)
+      return status(503, { error: "storage_not_configured", detail: "Firestore needs FIREBASE_SERVICE_ACCOUNT on the server." });
+  })
   .use(authPlugin)
   .get("/health", () => ({
     ok: true,
     service: "techzup-api",
     firebase: firebaseConfigured(),
+    firestore: firebaseAdminReady(),
+    projectId: firebaseProjectId(),
     devAuth: isDevAuth(),
     runtime: typeof Bun !== "undefined" ? `bun ${Bun.version}` : `node ${process.version}`,
   }))
@@ -109,9 +115,42 @@ export const app = new Elysia({ prefix: "/api" })
   .delete("/users/me", async ({ auth }) => {
     if (!auth) return status(401, { error: "unauthorized" });
     await users().remove(auth.uid);
-    await adminAuth()?.deleteUser(auth.uid).catch(() => {});
+    await privilegedAuth()?.deleteUser(auth.uid).catch(() => {});
     return { ok: true };
   })
+
+  /* ---------------- AI-Psychosis Test results ---------------- */
+  .get("/results", async ({ auth }) => {
+    if (!auth) return status(401, { error: "unauthorized" });
+    if (!(await users().get(auth.uid))) return status(404, { error: "not_registered" });
+    return { results: await users().results(auth.uid, 20) };
+  })
+  .post(
+    "/results",
+    {
+      body: t.Object({
+        ai: t.Integer({ minimum: 0, maximum: 100 }),
+        anti: t.Integer({ minimum: 0, maximum: 100 }),
+        verdict: t.Union([t.Literal("balanced"), t.Literal("watch"), t.Literal("ai"), t.Literal("anti"), t.Literal("doomloop")]),
+        grade: t.Union([t.Literal("SSS"), t.Literal("S"), t.Literal("A"), t.Literal("B"), t.Literal("C"), t.Literal("D")]),
+        clarity: t.Integer({ minimum: 0, maximum: 100 }),
+        timedOut: t.Boolean(),
+        lang: t.String({ minLength: 2, maxLength: 5 }),
+        finishedAt: t.Integer({ minimum: 1_600_000_000_000 }),
+      }),
+    },
+    async ({ auth, body }) => {
+      if (!auth) return status(401, { error: "unauthorized" });
+      const me = await users().get(auth.uid);
+      if (!me) return status(404, { error: "not_registered" });
+      if (me.status === "suspended") return status(403, { error: "suspended" });
+      if (body.finishedAt > Date.now() + 60_000) return status(400, { error: "bad_timestamp" });
+      // Doc id = finishedAt, so re-sending the same result never duplicates it.
+      const result: TestResult = { ...body, id: String(body.finishedAt), savedAt: Date.now() };
+      await users().saveResult(auth.uid, result);
+      return { result };
+    }
+  )
 
   /* ---------------- admin: user management ---------------- */
   .guard(
@@ -172,7 +211,7 @@ export const app = new Elysia({ prefix: "/api" })
         .delete("/admin/users/:uid", async ({ params, auth }) => {
           if (params.uid === auth!.uid) return status(400, { error: "cannot_delete_self" });
           await users().remove(params.uid);
-          await adminAuth()?.deleteUser(params.uid).catch(() => {});
+          await privilegedAuth()?.deleteUser(params.uid).catch(() => {});
           return { ok: true };
         })
   );

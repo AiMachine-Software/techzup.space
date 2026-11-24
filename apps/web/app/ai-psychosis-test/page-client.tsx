@@ -6,6 +6,8 @@ import { Hero } from "@/components/ai-test/hero";
 import { Phenomena } from "@/components/ai-test/phenomena";
 import { QuizFlow } from "@/components/ai-test/quiz-flow";
 import { Results } from "@/components/ai-test/results";
+import { MemberGate, SaveResultToAccount } from "@/components/ai-test/member-gate";
+import { useAuth } from "@/lib/auth-context";
 import { Guidance } from "@/components/ai-test/guidance";
 import { References } from "@/components/ai-test/references";
 import { LanguageSwitcher } from "@/components/ai-test/language-switcher";
@@ -47,8 +49,11 @@ export function AiTestPage() {
   }, [raw]);
 
   // สถานะ: ยังไม่เริ่ม (แบบฟอร์ม) → กำลังทำ (มีตัวจับเวลา) → เสร็จ (แสดงผล)
-  const finished = !!(profile && session?.finishedAt);
-  const inProgress = !!(profile && session && !session.finishedAt);
+  // techzup.space membership is required to take the test
+  const { status: memberStatus, profile: member } = useAuth();
+  const isMember = memberStatus === "ready";
+  const finished = isMember && !!(profile && session?.finishedAt);
+  const inProgress = isMember && !!(profile && session && !session.finishedAt);
 
   const scrollTo = (id: string) =>
     setTimeout(() => document.getElementById(id)?.scrollIntoView({ behavior: "smooth" }), 80);
@@ -180,7 +185,9 @@ export function AiTestPage() {
                 </p>
               )}
             </div>
-            {inProgress && session && profile ? (
+            {!isMember ? (
+              <MemberGate />
+            ) : inProgress && session && profile ? (
               <QuizFlow
                 answers={answers}
                 onAnswer={handleAnswer}
@@ -190,7 +197,10 @@ export function AiTestPage() {
                 profileName={profile.name}
               />
             ) : (
-              <ProfileForm key={profile?.consentAt ?? "new"} initial={profile} />
+              <ProfileForm
+                key={profile?.consentAt ?? "new"}
+                initial={profile ?? (member ? { name: member.displayName, email: member.email ?? "" } : null)}
+              />
             )}
           </div>
         </section>
@@ -205,6 +215,9 @@ export function AiTestPage() {
               timedOutNote: session.timedOut ? f.timeUpNote : null,
             }}
           />
+        )}
+        {finished && session?.finishedAt && (
+          <SaveResultToAccount answers={answers} finishedAt={session.finishedAt} timedOut={!!session.timedOut} />
         )}
         <Guidance verdictKey={verdictKey} />
         <References />

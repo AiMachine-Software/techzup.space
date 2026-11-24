@@ -22,6 +22,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { ProfileFields, validateProfile, type ProfileDraft, type ProfileErrors } from "@/components/profile-fields";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
+import { TestHistory } from "@/components/test-history";
 import { useAuth } from "@/lib/auth-context";
 import type { InterestId } from "@/lib/interests";
 
@@ -103,6 +104,8 @@ export default function AccountPage() {
                 )}
               </CardContent>
             </Card>
+
+            <TestHistory />
 
             <form onSubmit={save} noValidate>
               <Card className="bg-card/70">
