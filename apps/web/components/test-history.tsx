@@ -38,7 +38,7 @@ export function TestHistory() {
   }, [api]);
 
   return (
-    <Card className="bg-card/70">
+    <Card className="tz-panel">
       <CardHeader className="flex flex-row items-start justify-between gap-4">
         <div>
           <CardTitle>AI-Psychosis Test history</CardTitle>

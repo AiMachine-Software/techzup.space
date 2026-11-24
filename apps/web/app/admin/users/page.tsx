@@ -135,7 +135,7 @@ export default function AdminUsersPage() {
       <main className="mx-auto grid w-full max-w-6xl flex-1 content-start gap-6 px-4 py-10 sm:px-6">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <p className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-widest text-cyan-300">
+            <p className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-widest text-[#4cc3ff]">
               <ShieldCheck className="size-3.5" /> Admin
             </p>
             <h1 className="font-[family-name:var(--font-display)] text-3xl font-bold">User management</h1>
@@ -153,7 +153,7 @@ export default function AdminUsersPage() {
             ["Digest subscribers", stats?.newsletter],
             ["Suspended", stats?.byStatus?.suspended ?? 0],
           ].map(([label, v]) => (
-            <Card key={label as string} className="bg-card/70">
+            <Card key={label as string} className="tz-panel">
               <CardHeader className="pb-2">
                 <CardDescription>{label}</CardDescription>
                 <CardTitle className="font-[family-name:var(--font-display)] text-3xl">{v ?? "—"}</CardTitle>
@@ -173,7 +173,7 @@ export default function AdminUsersPage() {
         )}
 
         {/* Filters + table */}
-        <Card className="bg-card/70">
+        <Card className="tz-panel">
           <CardContent className="grid gap-4 pt-6">
             <div className="flex flex-col gap-3 sm:flex-row">
               <div className="relative flex-1">
@@ -229,7 +229,7 @@ export default function AdminUsersPage() {
                                 <AvatarFallback>{u.nickname.slice(0, 1).toUpperCase()}</AvatarFallback>
                               </Avatar>
                               <div className="min-w-0">
-                                <div className="truncate font-medium">{u.displayName} {self && <span className="text-xs text-cyan-300">(you)</span>}</div>
+                                <div className="truncate font-medium">{u.displayName} {self && <span className="text-xs text-[#4cc3ff]">(you)</span>}</div>
                                 <div className="truncate text-xs text-muted-foreground">@{u.nickname} · {u.email ?? "—"}</div>
                               </div>
                             </div>

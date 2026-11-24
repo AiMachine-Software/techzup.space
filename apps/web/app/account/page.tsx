@@ -82,7 +82,7 @@ export default function AccountPage() {
           <div className="flex justify-center py-24"><Loader2 className="size-6 animate-spin text-muted-foreground" /></div>
         ) : (
           <>
-            <Card className="bg-card/70">
+            <Card className="tz-panel">
               <CardContent className="flex flex-col items-start gap-4 pt-6 sm:flex-row sm:items-center">
                 <Avatar className="size-16 border border-border">
                   <AvatarImage src={profile.photoURL ?? undefined} alt="" />
@@ -108,7 +108,7 @@ export default function AccountPage() {
             <TestHistory />
 
             <form onSubmit={save} noValidate>
-              <Card className="bg-card/70">
+              <Card className="tz-panel">
                 <CardHeader>
                   <CardTitle>Profile &amp; preferences</CardTitle>
                   <CardDescription>Update how you appear and what you follow.</CardDescription>
@@ -122,7 +122,7 @@ export default function AccountPage() {
               </Card>
             </form>
 
-            <Card className="border-destructive/40 bg-card/70">
+            <Card className="border-destructive/40 tz-panel">
               <CardHeader>
                 <CardTitle>Delete account</CardTitle>
                 <CardDescription>Permanently removes your profile and sign-in. This can&apos;t be undone.</CardDescription>

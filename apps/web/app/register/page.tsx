@@ -71,9 +71,9 @@ function RegisterInner() {
       <SiteHeader />
       <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-10 sm:px-6">
         <form onSubmit={submit} noValidate>
-          <Card className="bg-card/70">
+          <Card className="tz-panel">
             <CardHeader>
-              <p className="text-xs font-medium uppercase tracking-widest text-cyan-300">Step 2 of 2</p>
+              <p className="text-xs font-medium uppercase tracking-widest text-[#4cc3ff]">Step 2 of 2</p>
               <CardTitle className="font-[family-name:var(--font-display)] text-2xl">Create your profile</CardTitle>
               <CardDescription>
                 Signed in as <span className="text-foreground">{identity?.email ?? identity?.name ?? "…"}</span>. Tell us a little about you.

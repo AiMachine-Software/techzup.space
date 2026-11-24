@@ -69,10 +69,10 @@ export function ProfileFields({
                 onClick={() => toggle(id)}
                 className={cn(
                   "flex items-center gap-2 rounded-lg border px-3 py-2.5 text-left text-sm transition",
-                  on ? "border-cyan-400/70 bg-cyan-400/10 text-foreground" : "border-border text-muted-foreground hover:border-foreground/30"
+                  on ? "border-[#1e9bff]/70 bg-[#1e9bff]/10 text-foreground" : "border-border text-muted-foreground hover:border-foreground/30"
                 )}
               >
-                {on ? <Check className="size-4 text-cyan-300" /> : <Icon className="size-4" />}
+                {on ? <Check className="size-4 text-[#4cc3ff]" /> : <Icon className="size-4" />}
                 {short}
               </button>
             );

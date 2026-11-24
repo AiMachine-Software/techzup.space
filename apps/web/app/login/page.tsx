@@ -22,11 +22,12 @@ function LoginInner() {
   }, [status, next, router]);
 
   return (
-    <Card className="w-full max-w-md bg-card/70 backdrop-blur">
-      <CardHeader className="items-center text-center">
-        <Logo />
-        <CardTitle className="mt-4 font-[family-name:var(--font-display)] text-2xl">Sign in or create an account</CardTitle>
-        <CardDescription>Use Google (Gmail), Facebook or X. New members finish a short profile next.</CardDescription>
+    <Card className="tz-panel tz-panel-glow w-full max-w-md">
+      <CardHeader className="flex flex-col items-center gap-2 text-center">
+        <Logo size="lg" className="justify-center" />
+        <p className="tz-kicker mt-3 text-[#4cc3ff]">Member access</p>
+        <CardTitle className="tz-display text-2xl">Sign in or create an account</CardTitle>
+        <CardDescription className="max-w-xs">Use Google (Gmail), Facebook or X. New members finish a short profile next.</CardDescription>
       </CardHeader>
       <CardContent>
         {status === "suspended" ? (
@@ -51,8 +52,9 @@ function LoginInner() {
 
 export default function LoginPage() {
   return (
-    <main className="relative flex min-h-screen items-center justify-center px-4 py-12">
-      <div aria-hidden className="brand-grid absolute inset-0 -z-10" />
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden px-4 py-12">
+      <div aria-hidden className="tz-laser tz-laser-blue left-0 top-[18%] -rotate-[14deg]" />
+      <div aria-hidden className="tz-laser tz-laser-red right-0 top-[22%] rotate-[14deg]" />
       <Suspense>
         <LoginInner />
       </Suspense>

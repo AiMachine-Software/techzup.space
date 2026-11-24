@@ -12,7 +12,7 @@ export function HomeAuthCard() {
 
   if (status === "ready" && profile)
     return (
-      <Card className="bg-card/70 backdrop-blur">
+      <Card className="tz-panel tz-panel-glow">
         <CardHeader>
           <CardTitle>Welcome back, {profile.nickname}</CardTitle>
           <CardDescription>Your topics: {profile.interests.length ? profile.interests.join(", ").toUpperCase() : "none yet"}</CardDescription>
@@ -30,7 +30,7 @@ export function HomeAuthCard() {
 
   if (status === "error")
     return (
-      <Card className="bg-card/70 backdrop-blur">
+      <Card className="tz-panel tz-panel-glow">
         <CardHeader>
           <CardTitle>Accounts are temporarily unavailable</CardTitle>
           <CardDescription>You&apos;re signed in, but we couldn&apos;t load your profile. Please try again shortly.</CardDescription>
@@ -40,7 +40,7 @@ export function HomeAuthCard() {
 
   if (status === "needs-registration")
     return (
-      <Card className="bg-card/70 backdrop-blur">
+      <Card className="tz-panel tz-panel-glow">
         <CardHeader>
           <CardTitle>One more step</CardTitle>
           <CardDescription>You&apos;re signed in. Finish your profile to activate your account.</CardDescription>
@@ -54,9 +54,9 @@ export function HomeAuthCard() {
     );
 
   return (
-    <Card className="bg-card/70 backdrop-blur">
+    <Card className="tz-panel tz-panel-glow">
       <CardHeader>
-        <CardTitle className="font-[family-name:var(--font-display)] text-xl">Sign in to techzup.space</CardTitle>
+        <CardTitle className="font-[family-name:var(--font-display)] text-xl">Sign in to TechZup</CardTitle>
         <CardDescription>New here? Signing in creates your account.</CardDescription>
       </CardHeader>
       <CardContent>

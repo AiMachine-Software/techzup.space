@@ -1,95 +1,147 @@
+import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, BellRing, BrainCircuit, Globe2, Newspaper, Sparkles, Users } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { ArrowRight, BellRing, BrainCircuit, Newspaper, Radar, Sparkles, Swords, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { HomeAuthCard } from "@/components/home-auth-card";
 import { INTERESTS } from "@/lib/interests";
 
 const PERKS = [
-  { Icon: Newspaper, title: "A feed that fits you", text: "Pick the topics you care about and your front page follows them." },
-  { Icon: BellRing, title: "Weekly digest", text: "One email with the week's biggest tech and AI stories. Opt in or out anytime." },
-  { Icon: Sparkles, title: "Interactive features", text: "Tests, explainers and tools like the AI-Psychosis Test." },
-  { Icon: Users, title: "Join the conversation", text: "Member profiles today; comments and community features as they launch." },
+  { Icon: Newspaper, title: "Your desks, your feed", text: "Follow the topics you care about and your front page follows them." },
+  { Icon: BellRing, title: "Weekly signal digest", text: "One email with the week's biggest AI and tech moves. Opt in or out anytime." },
+  { Icon: Sparkles, title: "Interactive features", text: "Tests and tools like the AI-Psychosis Test, with results saved to your account." },
+  { Icon: Users, title: "Member profile", text: "One sign-in with Google, Facebook or X across everything on TechZup." },
 ];
+
+const BATTLE_ROUNDS = ["Reasoning", "Coding", "Multimodal", "Agents", "Speed", "Cost"];
 
 export default function Home() {
   return (
     <div className="relative flex min-h-screen flex-col">
-      <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[720px] overflow-hidden">
-        <div className="brand-grid absolute inset-0" />
-        <div className="absolute -top-40 left-1/2 h-[520px] w-[900px] -translate-x-1/2 rounded-full bg-gradient-to-r from-cyan-500/20 via-violet-500/20 to-pink-500/15 blur-3xl" />
-      </div>
       <SiteHeader />
 
       <main className="flex-1">
-        {/* Hero */}
-        <section className="mx-auto grid max-w-6xl items-center gap-10 px-4 pb-16 pt-14 sm:px-6 lg:grid-cols-[1.25fr_1fr] lg:pt-20">
-          <div>
-            <Badge variant="outline" className="gap-1.5 border-cyan-400/40 bg-cyan-400/10 text-cyan-200">
-              <Globe2 className="size-3.5" /> Tech · AI · ML — from around the world
-            </Badge>
-            <h1 className="mt-5 font-[family-name:var(--font-display)] text-4xl font-bold leading-[1.05] tracking-tight sm:text-5xl lg:text-6xl">
-              Stay ahead of <span className="brand-gradient-text">tech &amp; AI</span>, without the noise.
-            </h1>
-            <p className="mt-5 max-w-xl text-lg text-muted-foreground">
-              techzup.space is an online magazine tracking technology, artificial intelligence and machine learning
-              worldwide — clear reporting, explainers and interactive features for curious people.
-            </p>
-            <div className="mt-8 flex flex-wrap gap-3">
-              <Button asChild size="lg" className="h-11 px-6">
-                <Link href="/login?next=/register">
-                  Create free account <ArrowRight className="size-4" />
-                </Link>
-              </Button>
-              <Button asChild size="lg" variant="outline" className="h-11 px-6">
-                <a href="/ai-psychosis-test">
-                  <BrainCircuit className="size-4" /> Take the AI-Psychosis Test
-                </a>
-              </Button>
+        {/* ================= HERO ================= */}
+        <section className="relative overflow-hidden">
+          <div aria-hidden className="tz-laser tz-laser-blue left-0 top-24 -rotate-[12deg]" />
+          <div aria-hidden className="tz-laser tz-laser-red right-0 top-32 rotate-[12deg]" />
+          <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 pb-20 pt-16 sm:px-6 lg:grid-cols-[1.3fr_1fr] lg:pt-24">
+            <div>
+              <p className="tz-kicker flex items-center gap-2 text-[#4cc3ff]">
+                <Radar className="size-3.5" /> AI · ML · Tech — global newsroom
+              </p>
+              <h1 className="tz-display mt-5 text-[2.5rem] leading-[1.04] text-white sm:text-[3.4rem] xl:text-[4rem]">
+                The frontier of <span className="tz-glow-blue">AI</span>,
+                <br /> decoded.
+              </h1>
+              <p className="mt-6 max-w-xl text-lg leading-relaxed text-muted-foreground">
+                TechZup tracks artificial intelligence, machine learning and the technology shaping the world — clear
+                reporting, model battles and interactive features for people who want the signal, not the noise.
+              </p>
+              <div className="mt-8 flex flex-wrap gap-3">
+                <Button asChild size="lg" className="tz-chamfer h-12 rounded-none px-7 text-[15px]">
+                  <Link href="/login?next=/register">
+                    Join TechZup free <ArrowRight className="size-4" />
+                  </Link>
+                </Button>
+                <Button asChild size="lg" variant="outline" className="tz-chamfer h-12 rounded-none border-[#1e9bff]/40 bg-transparent px-7 text-[15px]">
+                  <a href="#llm-wars">
+                    <Swords className="size-4" /> LLM Wars 2026
+                  </a>
+                </Button>
+              </div>
+              <dl className="mt-10 grid max-w-md grid-cols-3 gap-4 border-t border-[#1e9bff]/20 pt-6">
+                {[
+                  ["8", "news desks"],
+                  ["22", "languages in tests"],
+                  ["Free", "membership"],
+                ].map(([v, l]) => (
+                  <div key={l}>
+                    <dt className="tz-display text-2xl text-white">{v}</dt>
+                    <dd className="mt-1 text-xs text-muted-foreground">{l}</dd>
+                  </div>
+                ))}
+              </dl>
             </div>
+            <HomeAuthCard />
           </div>
-          <HomeAuthCard />
         </section>
 
-        {/* Featured: AI-Psychosis Test */}
-        <section id="features" className="mx-auto max-w-6xl scroll-mt-20 px-4 sm:px-6">
-          <a
-            href="/ai-psychosis-test"
-            className="group relative block overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-[#12081f] via-[#0b0d1f] to-[#051a1f] p-6 transition hover:border-cyan-400/50 sm:p-10"
-          >
-            <div aria-hidden className="absolute -right-24 -top-24 size-72 rounded-full bg-red-500/20 blur-3xl" />
-            <div aria-hidden className="absolute -bottom-24 right-40 size-72 rounded-full bg-blue-500/20 blur-3xl" />
+        {/* ================= LLM WARS ================= */}
+        <section id="llm-wars" className="mx-auto max-w-6xl scroll-mt-20 px-4 sm:px-6">
+          <div className="tz-gold-frame overflow-hidden rounded-xl bg-black">
+            <div className="relative">
+              <Image
+                src="/brand/llm-wars.webp"
+                alt="TechZup LLM Wars — AI Model Battle 2026"
+                width={1220}
+                height={612}
+                priority
+                className="h-auto w-full"
+              />
+              <div aria-hidden className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black to-transparent" />
+            </div>
+            <div className="grid gap-8 border-t border-[#f7c548]/30 bg-gradient-to-b from-[#0b0906] to-black p-6 sm:p-10 md:grid-cols-[1.3fr_1fr] md:items-center">
+              <div>
+                <p className="tz-kicker text-[#f7c548]">Featured series · Season 2026</p>
+                <h2 className="tz-display tz-gold-text mt-3 text-4xl sm:text-5xl">LLM Wars</h2>
+                <p className="mt-4 max-w-xl leading-relaxed text-muted-foreground">
+                  Frontier AI models go head-to-head on the same tasks, scored the same way. Each round puts the big
+                  labs&apos; models through real work and publishes what we find — methods included.
+                </p>
+                <div className="mt-6 flex flex-wrap gap-2">
+                  {BATTLE_ROUNDS.map((r) => (
+                    <span key={r} className="tz-chamfer border border-[#f7c548]/40 bg-[#f7c548]/10 px-3 py-1 text-xs font-medium text-[#ffe08a]">
+                      {r}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              <div className="flex flex-col gap-3 md:items-end">
+                <p className="text-sm text-muted-foreground md:text-right">
+                  First rounds land here soon. Members get each result the day it publishes.
+                </p>
+                <Button asChild size="lg" className="tz-chamfer h-12 rounded-none bg-[#f7c548] px-7 text-[15px] text-black shadow-[0_0_28px_-4px_rgba(247,197,72,0.8)] hover:bg-[#ffd76a]">
+                  <Link href="/login?next=/register">
+                    Get round alerts <BellRing className="size-4" />
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ================= AI-PSYCHOSIS TEST ================= */}
+        <section id="features" className="mx-auto max-w-6xl scroll-mt-20 px-4 pt-20 sm:px-6">
+          <a href="/ai-psychosis-test" className="tz-panel tz-card-hover tz-chamfer group block overflow-hidden p-6 sm:p-10">
+            <div aria-hidden className="absolute -left-20 top-1/2 size-72 -translate-y-1/2 rounded-full bg-[#ff4b3a]/20 blur-3xl" />
+            <div aria-hidden className="absolute -right-20 top-1/2 size-72 -translate-y-1/2 rounded-full bg-[#1e9bff]/25 blur-3xl" />
             <div className="relative grid gap-8 md:grid-cols-[1.4fr_1fr] md:items-center">
               <div>
-                <Badge className="bg-pink-500/15 text-pink-200 hover:bg-pink-500/15">Featured interactive</Badge>
-                <h2 className="mt-4 font-[family-name:var(--font-display)] text-3xl font-bold tracking-tight sm:text-4xl">
-                  The AI-Psychosis Test
-                </h2>
-                <p className="mt-3 max-w-xl text-muted-foreground">
-                  Do you trust AI chatbots more than you should — or fear AI beyond reason? 20 questions, 20 minutes,
-                  an instant result with a collectible grade card, and practical advice. Available in 22 languages.
+                <p className="tz-kicker text-[#ff7a6b]">Interactive · Members only</p>
+                <h2 className="tz-display mt-3 text-3xl text-white sm:text-4xl">The AI-Psychosis Test</h2>
+                <p className="mt-4 max-w-xl leading-relaxed text-muted-foreground">
+                  Do you trust AI chatbots more than you should — or fear AI beyond reason? 20 questions in 20 minutes,
+                  an instant result with a collectible grade card, and practical advice. Available in 22 languages,
+                  saved to your TechZup account.
                 </p>
-                <span className="mt-6 inline-flex items-center gap-2 font-medium text-cyan-300">
-                  Start the test <ArrowRight className="size-4 transition group-hover:translate-x-1" />
+                <span className="mt-6 inline-flex items-center gap-2 font-medium text-[#4cc3ff]">
+                  <BrainCircuit className="size-4" /> Start the test
+                  <ArrowRight className="size-4 transition group-hover:translate-x-1" />
                 </span>
-                <p className="mt-4 text-xs text-muted-foreground">
-                  Free for techzup.space members — your results are saved to your account. For education and
-                  research, not a medical diagnosis.
-                </p>
+                <p className="mt-4 text-xs text-muted-foreground">For education and research — not a medical diagnosis.</p>
               </div>
               <div className="grid grid-cols-2 gap-3 text-center">
                 {[
-                  ["20", "questions"],
-                  ["22", "languages"],
-                  ["D → S", "grades"],
-                  ["SSS", "rarest result"],
-                ].map(([v, l]) => (
-                  <div key={l} className="rounded-xl border border-white/10 bg-white/5 p-4">
-                    <div className="font-[family-name:var(--font-display)] text-2xl font-bold">{v}</div>
-                    <div className="text-xs text-muted-foreground">{l}</div>
+                  ["AI", "over-belief", "text-[#ff6b5b]"],
+                  ["ANTI", "AI fear", "text-[#4cc3ff]"],
+                  ["D → S", "clarity grades", "text-white"],
+                  ["SSS", "rarest result", "text-[#f7c548]"],
+                ].map(([v, l, c]) => (
+                  <div key={l} className="tz-chamfer border border-white/10 bg-black/40 p-4">
+                    <div className={`tz-display text-2xl ${c}`}>{v}</div>
+                    <div className="mt-1 text-xs text-muted-foreground">{l}</div>
                   </div>
                 ))}
               </div>
@@ -97,55 +149,54 @@ export default function Home() {
           </a>
         </section>
 
-        {/* Topics */}
-        <section id="topics" className="mx-auto max-w-6xl scroll-mt-20 px-4 py-20 sm:px-6">
-          <div className="max-w-2xl">
-            <h2 className="font-[family-name:var(--font-display)] text-3xl font-bold tracking-tight">What we cover</h2>
-            <p className="mt-3 text-muted-foreground">
-              Eight desks, one global view. Choose the ones you want in your feed when you register.
-            </p>
+        {/* ================= DESKS ================= */}
+        <section id="desks" className="mx-auto max-w-6xl scroll-mt-20 px-4 py-20 sm:px-6">
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <div className="max-w-2xl">
+              <p className="tz-kicker text-[#4cc3ff]">Coverage</p>
+              <h2 className="tz-display mt-3 text-3xl text-white sm:text-4xl">Eight desks. One global view.</h2>
+              <p className="mt-3 text-muted-foreground">Pick the desks you want in your feed when you join.</p>
+            </div>
           </div>
-          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {INTERESTS.map(({ id, label, Icon, blurb }) => (
-              <Card key={id} className="bg-card/60 transition hover:border-cyan-400/40">
-                <CardHeader>
-                  <span className="mb-2 flex size-10 items-center justify-center rounded-lg bg-gradient-to-br from-cyan-400/20 to-violet-500/20 text-cyan-200">
+          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {INTERESTS.map(({ id, label, Icon, blurb }, i) => (
+              <div key={id} className="tz-panel tz-card-hover tz-chamfer p-5">
+                <div className="flex items-center justify-between">
+                  <span className="flex size-10 items-center justify-center border border-[#1e9bff]/40 bg-[#1e9bff]/10 text-[#4cc3ff]">
                     <Icon className="size-5" />
                   </span>
-                  <CardTitle className="text-base">{label}</CardTitle>
-                  <CardDescription>{blurb}</CardDescription>
-                </CardHeader>
-              </Card>
+                  <span className="font-mono text-xs text-[#1e9bff]/60">{String(i + 1).padStart(2, "0")}</span>
+                </div>
+                <h3 className="mt-4 font-semibold text-white">{label}</h3>
+                <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{blurb}</p>
+              </div>
             ))}
           </div>
         </section>
 
-        {/* Member perks */}
-        <section className="mx-auto max-w-6xl px-4 pb-20 sm:px-6">
-          <Card className="overflow-hidden bg-card/60">
-            <CardContent className="grid gap-10 p-6 sm:p-10 lg:grid-cols-[1fr_1.4fr]">
-              <div>
-                <h2 className="font-[family-name:var(--font-display)] text-3xl font-bold tracking-tight">
-                  Why create an account?
-                </h2>
-                <p className="mt-3 text-muted-foreground">
-                  Free, takes a minute, and you can sign in with Google, Facebook or X.
-                </p>
-                <Button asChild className="mt-6">
-                  <Link href="/login?next=/register">Join techzup.space</Link>
-                </Button>
-              </div>
-              <div className="grid gap-6 sm:grid-cols-2">
-                {PERKS.map(({ Icon, title, text }) => (
-                  <div key={title}>
-                    <Icon className="size-5 text-cyan-300" />
-                    <h3 className="mt-2 font-semibold">{title}</h3>
-                    <p className="mt-1 text-sm text-muted-foreground">{text}</p>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+        {/* ================= MEMBERSHIP ================= */}
+        <section className="mx-auto max-w-6xl px-4 pb-24 sm:px-6">
+          <div className="tz-panel tz-panel-glow tz-chamfer grid gap-10 p-6 sm:p-10 lg:grid-cols-[1fr_1.4fr]">
+            <div>
+              <p className="tz-kicker text-[#4cc3ff]">Membership</p>
+              <h2 className="tz-display mt-3 text-3xl text-white sm:text-4xl">
+                Join <span className="tz-wordmark"><span className="tz-tech">Tech</span><span className="tz-zup">Zup</span></span>
+              </h2>
+              <p className="mt-3 text-muted-foreground">Free, takes a minute — sign in with Google, Facebook or X.</p>
+              <Button asChild size="lg" className="tz-chamfer mt-6 h-12 rounded-none px-7">
+                <Link href="/login?next=/register">Create free account <ArrowRight className="size-4" /></Link>
+              </Button>
+            </div>
+            <div className="grid gap-6 sm:grid-cols-2">
+              {PERKS.map(({ Icon, title, text }) => (
+                <div key={title} className="border-l border-[#1e9bff]/30 pl-4">
+                  <Icon className="size-5 text-[#4cc3ff]" />
+                  <h3 className="mt-2 font-semibold text-white">{title}</h3>
+                  <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{text}</p>
+                </div>
+              ))}
+            </div>
+          </div>
         </section>
       </main>
       <SiteFooter />
